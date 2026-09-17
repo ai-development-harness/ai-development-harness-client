@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AI Development Harness — Full UI Prototype</title>
+</head>
+<body>
+  <noscript>Для интерактивного прототипа требуется JavaScript.</noscript>
+  <script src="assets/payload-0.js"></script>
+  <script src="assets/payload-1.js"></script>
+  <script src="assets/payload-2.js"></script>
+  <script src="assets/payload-3.js"></script>
+  <script src="assets/payload-4.js"></script>
+  <script src="assets/payload-5.js"></script>
+  <script src="assets/payload-6.js"></script>
+  <script>
+  (async()=>{
+    const b64=window.__harnessPrototypeB64||'';
+    const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
+    if (!("DecompressionStream" in window)) throw new Error("Browser does not support DecompressionStream(gzip)");
+    const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+    const html=await new Response(stream).text();
+    document.open(); document.write(html); document.close();
+  })().catch(err=>{
+    document.body.innerHTML=`<main style="font-family:system-ui;padding:32px"><h1>Prototype load failed</h1><pre>${String(err)}</pre></main>`;
+  });
+  </script>
+</body>
+</html>
