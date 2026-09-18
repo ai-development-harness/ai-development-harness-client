@@ -48,7 +48,7 @@
           '<label class="erd-opt"><input type="radio" name="erdChoice" value="custom"> Другой вариант</label>',
           '<input class="erd-input" data-custom placeholder="Свободный ответ (необязательно)">',
           '<div class="erd-actions"><button class="erd-btn primary" data-act="answer" type="button">Продолжить run</button><button class="erd-btn danger" data-act="cancel" type="button">Остановить</button></div></section>',
-        '<section class="erd-interact approval" data-approval hidden><h4>Требуется разрешение</h4><p>Это нативный permission request от runtime, а не вопрос, распознанный из текста модели.</p><div class="erd-command">npm install @microsoft/fetch-event-source</div><p>Причина: агент предлагает зависимость для transport fallback.</p><div class="erd-actions"><button class="erd-btn primary" data-act="approve" type="button">Разрешить один раз</button><button class="erd-btn danger" data-act="deny" type="button">Отклонить</button></div></section>',
+        '<section class="erd-interact approval" data-approval hidden><h4>Требуется разрешение</h4><p>Это нативный permission request от runtime, а не вопрос, распознанный из текста модели.</p><div class="erd-command">npx nx test client</div><p>Причина: runtime запрашивает разрешение на запуск обязательной deterministic verification.</p><div class="erd-actions"><button class="erd-btn primary" data-act="approve" type="button">Разрешить один раз</button><button class="erd-btn danger" data-act="deny" type="button">Отклонить</button></div></section>',
         '<section class="erd-result" data-result hidden><h4>✓ Run завершён — repository перечитан</h4><div class="erd-result-grid"><div><strong>3 файла изменено</strong>из Git projection</div><div><strong>Verification PASS</strong>deterministic checks</div><div><strong>Review PASS</strong>durable artifact</div></div><p class="erd-sub">Итог получен из repository artifacts и Git state, а не из фразы модели «готово».</p></section>',
       '</div>',
       '<footer class="erd-foot"><div class="erd-muted"><span data-elapsed>00:00</span> · run продолжает жить, если закрыть панель</div><div class="erd-actions" style="margin:0"><button class="erd-btn" data-act="restart" type="button">Повторить демо</button><button class="erd-btn danger" data-act="cancel" type="button">Остановить</button></div></footer>',
@@ -99,19 +99,17 @@
     var answerText = choice && choice.value === 'confirm' ? 'спросить перед переподключением' : choice && choice.value === 'custom' ? (custom || 'другой вариант') : 'переподключаться автоматически';
     question.hidden = true; state = 'running'; setStatus('Выполняется', ''); line('interaction.response · ' + answerText, 'event'); line('Тот же runtime session продолжает выполнение.');
     later(700, function () { line('Изменяю run subscription contract и reconnect handling...'); });
-    later(1400, function () { line('permission.required · shell command', 'warn'); state = 'waiting'; setStatus('Нужно разрешение', 'wait'); approval.hidden = false; approval.scrollIntoView({ block: 'nearest' }); });
+    later(1400, function () { phase('implement', 'done', 'done'); phase('verify', 'active', 'approval'); line('permission.required · verification command', 'warn'); state = 'waiting'; setStatus('Нужно разрешение', 'wait'); approval.hidden = false; approval.scrollIntoView({ block: 'nearest' }); });
   }
 
   function approve() {
     if (state !== 'waiting' || approval.hidden) return;
-    approval.hidden = true; state = 'running'; setStatus('Выполняется', ''); line('permission.response · allow_once', 'event'); line('$ npm install @microsoft/fetch-event-source');
-    later(550, function () { line('dependency installed · package-lock updated', 'ok'); });
-    later(1000, function () { phase('implement', 'done', 'done'); phase('verify', 'active', 'active'); line('IMPLEMENT завершён по structured event. Запускаю verification.', 'event'); });
-    later(1550, function () { line('✓ nx test client', 'ok'); });
-    later(1950, function () { line('✓ nx lint client', 'ok'); });
-    later(2350, function () { phase('verify', 'done', 'done'); phase('review', 'active', 'active'); line('VERIFY PASS · запускаю independent REVIEW', 'event'); });
-    later(3000, function () { line('Reviewer: критических findings нет.'); });
-    later(3500, finish);
+    approval.hidden = true; state = 'running'; setStatus('Выполняется', ''); phase('verify', 'active', 'active'); line('permission.response · allow_once', 'event'); line('$ npx nx test client');
+    later(650, function () { line('✓ nx test client', 'ok'); });
+    later(1100, function () { line('✓ nx lint client', 'ok'); });
+    later(1550, function () { phase('verify', 'done', 'done'); phase('review', 'active', 'active'); line('VERIFY PASS · запускаю independent REVIEW', 'event'); });
+    later(2200, function () { line('Reviewer: критических findings нет.'); });
+    later(2700, finish);
   }
 
   function finish() {
