@@ -607,6 +607,37 @@ repository + Git + runtime adapters
 
 Будущая hosted UI не должна автоматически означать cloud execution.
 
+### Выполнение команд в MVP
+
+Команда, запущенная через runtime adapter, должна иметь живое визуальное представление выполнения.
+
+Клиент использует временную client-owned сущность `ExecutionRun`, которая хранит минимум:
+
+```text
+runId
+projectRoot
+runtimeId
+command
+status
+events
+result
+```
+
+`ExecutionRun` не является Harness state и не заменяет STEP / review / evidence / Git artifacts.
+
+Основные правила:
+
+- output поступает в UI по мере выполнения;
+- Codex и Claude Code нормализуются через общий event contract runtime adapters;
+- свободный текст модели не используется для вывода protocol transitions;
+- structured state показывается только по Harness artifacts, deterministic tooling или достоверным runtime events;
+- запрос пользователя может временно перевести run в `waiting-for-input`;
+- активный run не теряется при навигации между экранами;
+- transport остаётся заменяемым за `ClientApi`, без фиксации SSE/WebSocket на уровне product requirements;
+- после mutation client перечитывает repository и Git state вместо доверия textual self-report модели.
+
+Долговременная история завершённых запусков, telemetry и analytics остаются отдельной Post-MVP capability **Activity / Runs**.
+
 ## 23. Будущий remote bridge
 
 Если появится hosted UI + local bridge, предусмотреть:
