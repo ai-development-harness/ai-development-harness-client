@@ -23,6 +23,9 @@ UI — графическая оболочка над repository-based Harness p
 | Harness validation | Open Project |
 | Initialized project | Overview |
 | Pre-INIT project | Project / INIT |
+| Create/edit `PROJECT_BRIEF.local.md` | Project / INIT |
+| Run `INIT PROJECT` | Project / INIT |
+| Refresh after successful INIT | Project / INIT → Overview |
 | Invalid repository | Validation error |
 | Project switch | Topbar |
 | Explicit runtime | Topbar |
@@ -93,7 +96,41 @@ Independent review is always required. Specialized reviewers can be `auto` or `a
 
 ### Activity / Runs
 
-Client-owned projection. It must not become canonical state for STEP / review / evidence.
+Post-MVP client-owned projection. It must not become canonical state for STEP / review / evidence. Предпочтительное хранение execution metadata — local-only daily JSONL под `.project/local/activity/`.
+
+## Delivery scope
+
+### MVP
+
+- Open/validate repository;
+- create/edit local Project Brief;
+- INIT PROJECT through UI;
+- Overview / Roadmap / STEP / REQ / ADR / Knowledge;
+- Reviews / Audit / Reconcile / Releases;
+- Skills;
+- Git Workspace и PR command;
+- Agents & Models;
+- Harness Updates;
+- Policies & Settings;
+- Command Palette;
+- dark theme + accessibility baseline.
+
+### Post-MVP
+
+- Activity / Runs и runtime/model provenance;
+- model/runtime analytics;
+- отдельный GitHub Collaboration screen;
+- full light theme;
+- English UI;
+- live repository watcher.
+
+### Architectural reserve
+
+- hosted UI;
+- secure local bridge;
+- remote pairing.
+
+Точный acceptance contract: [`REQUIREMENTS.md`](REQUIREMENTS.md).
 
 ## Navigation
 
