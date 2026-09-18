@@ -60,7 +60,11 @@ Prototype использует semantic tokens сайта:
 
 - команды не запускают реальные runtime adapters;
 - кнопки Harness command показывают preview / toast;
-- `RUN STEP` открывает drawer с immutable `projectRoot + runtimeId`;
+- `RUN STEP` открывает интерактивный **Execution Run** с immutable `projectRoot + runtimeId`;
+- Execution Run демонстрирует incremental output, structured Harness phases и правило «текст модели ≠ protocol state»;
+- в ходе demo runtime переходит в `waiting-for-input`, принимает structured clarification, продолжает тот же run, затем показывает native-style permission request;
+- разрешение/отклонение влияет на продолжение run; успешный путь заканчивается deterministic verification, independent review и repository refresh;
+- панель можно закрыть во время выполнения и открыть снова — demo run продолжает жить отдельно от текущего UI surface;
 - Settings интерактивно обновляет manifest preview, RUN policy и Skills shortlist;
 - Harness Updates демонстрирует read-only CHECK flow;
 - таблица Roadmap фильтруется;
