@@ -1,187 +1,145 @@
 # AI Development Harness UI — Functional Coverage
 
-Основание: текущая продуктовая модель AI Development Harness Client и текущий публичный Harness protocol.
+Основание: Harness v0.3.0, текущая продуктовая модель клиента и утверждённые UX-решения.
 
 ## Главный принцип
 
 UI — графическая оболочка над repository-based Harness protocol.
 
 - Repository остаётся source of truth.
-- UI не реализует второй вариант orchestration.
-- Детерминированные read-сценарии обслуживает repository / Git projection layer.
-- Командные действия передаются явно выбранному runtime adapter как canonical Harness commands.
-- Каждый run получает **явный repository context и explicit runtimeId**.
-- `projectRoot + runtimeId` фиксируются на старте run и не меняются при последующем project/runtime switch.
+- UI не реализует собственный orchestration.
+- Read-only views строятся из repository / Git projections.
+- Commands передаются explicit runtime adapter.
+- Каждый run фиксирует `projectRoot + runtimeId`.
+- Runtime не выбирается автоматически.
 
 ## Client lifecycle
 
 | Capability | UI surface |
 |---|---|
-| Запуск `harness-ui` | Distribution / launcher model |
-| Выбор repository | Open Project |
-| Recent projects | Open Project / Project switcher |
-| Harness project validation | Open Project / validation state |
-| Valid initialized project | Open → Overview |
-| Valid pre-INIT project | Open → Project / INIT |
-| Ordinary Git repo / invalid Harness | Validation error |
-| Current project path + branch | Top bar / sidebar / Project |
-| Switch project | Global project switcher |
-| Navigation without project | All screens available in Demo Preview mode |
-| Commands without project | Locked / requires explicit project context |
-| Immutable project context per run | Run drawer + Activity |
+| `harness-ui` / path argument | Launcher model / Open Project |
+| Repository selection | Open Project |
+| Recent projects | Open Project / project switcher |
+| Harness validation | Open Project |
+| Initialized project | Overview |
+| Pre-INIT project | Project / INIT |
+| Invalid repository | Validation error |
+| Project switch | Topbar |
+| Explicit runtime | Topbar |
+| Command Palette | Global |
+| Immutable run context | RUN drawer / Activity |
 
 ## Canonical Harness commands
 
-| Harness capability | UI surface |
+| Command | UI surface |
 |---|---|
-| INIT PROJECT | Project / initialization wizard |
-| ADD STEP | Roadmap / Add STEP |
-| FIND SKILL | Skills / Search |
-| INSTALL SKILL | Skills / Candidate inspector |
-| CREATE SKILL | Skills / Create |
-| GENERATE GITHUB TEMPLATES | GitHub / Collaboration templates |
-| QUICK FIX | Overview / Quick Fix modal |
-| PLAN STEP-NNN | STEP detail / Plan |
-| IMPLEMENT STEP-NNN | STEP detail / Implement |
-| REVIEW STEP-NNN | STEP detail + Reviews |
-| FIX STEP-NNN | STEP detail / Fix findings |
-| RUN STEP-NNN | STEP detail / Orchestration |
-| AUDIT STEP-NNN | STEP detail + Audits |
-| STATUS PROJECT | Overview / Project health |
-| NEXT STEP | Overview / Recommended work |
-| RECONCILE PROJECT | Audits & Reconcile |
+| INIT PROJECT | Project / INIT |
+| ADD STEP | Roadmap |
+| FIND SKILL | Skills |
+| INSTALL SKILL | Skills candidate inspector |
+| CREATE SKILL | Skills |
+| GENERATE GITHUB TEMPLATES | GitHub collaboration |
+| QUICK FIX | Overview / Command Palette |
+| PLAN STEP-NNN | STEP Detail |
+| IMPLEMENT STEP-NNN | STEP Detail |
+| REVIEW STEP-NNN | STEP Detail / Reviews |
+| FIX STEP-NNN | Reviews / STEP Detail |
+| RUN STEP-NNN | STEP Detail / RUN drawer |
+| AUDIT STEP-NNN | Audits |
+| STATUS PROJECT | Overview |
+| NEXT STEP | Overview recommendation |
+| RECONCILE PROJECT | Audits / Reconcile |
 | RELEASE CHECK | Releases |
-| CHECK HARNESS UPDATE | Harness updates |
-| UPDATE HARNESS | Harness updates |
+| CHECK HARNESS UPDATE | Harness Updates |
+| UPDATE HARNESS | Harness Updates |
 | GIT CHECK | Git workspace |
-| COMMIT | Git workspace / commit builder |
+| COMMIT | Git workspace |
 | PUSH | Git workspace |
-| PR | Git workspace |
+| PR | GitHub collaboration / Git workspace |
 | SYNC | Git workspace |
 
-## Supporting workflow skills
+## v0.3.0 settings
 
-| Skill | UI surface |
-|---|---|
-| requirements-review | Requirements |
-| architecture-change | Architecture / ADR |
-| documentation-sync | Knowledge + STEP tools |
-| code-review | Reviews + STEP tools |
-| security-review | Reviews + STEP tools |
-| write-tests | STEP tools / Reviews |
+| Setting | UI | Constraint |
+|---|---|---|
+| `execution.maxFixReviewCycles` | Policies & Settings / RUN drawer | integer 1..5 |
+| `review.security` | Policies & Settings / Reviews / RUN | `auto | always` |
+| `review.tests` | Policies & Settings / Reviews / RUN | `auto | always` |
+| `skills.search.maxResults` | Policies & Settings / Skills | integer 1..10 |
 
-## Project / runtime boundary
+No hidden fallback is represented in UI.
 
-Prototype explicitly models:
+## Important semantics
 
-```text
-UI
-├── Repository / Git projection layer
-│   └── selected Harness repository
-└── Runtime adapter layer
-    ├── Codex
-    └── Claude Code
-        ├── projectRoot = selected repository
-        ├── runtimeId = explicit user selection
-        └── command = canonical Harness command
-```
+### NEXT STEP
 
-The UI never resolves a random process cwd at command time, never infers an active runtime, and never copies Harness orchestration into its own client logic.
+One primary recommendation, not an execution lock. UI explicitly shows that other unblocked STEP can exist.
 
-## Configuration and extension points
+### AUDIT vs RECONCILE
 
-- `.project/manifest.yaml` → Project + Policies.
-- `.project/git-policy.toml` → Git workspace + Policies.
-- `.project/harness-policy.toml` → Policies / Validation.
-- `.codex/config.toml` + `.codex/agents/*.toml` → Agents & Models.
-- `docs/skills/REGISTRY.md` → Skills.
-- `AGENTS.local.md` → Local commands/preferences; Command Palette discovers aliases.
-- Project docs / REQ / ADR / STEP / review / audit / release reports → Knowledge browser and structured views.
+Separate concepts and actions. AUDIT is bounded; RECONCILE is project-wide.
 
-## Full-product navigation
+### QUICK FIX
 
-1. Open Project / repository validation
+No setting may expand QUICK FIX into behavior/API/data/security/architecture/dependency changes.
+
+### Reviews
+
+Independent review is always required. Specialized reviewers can be `auto` or `always`, never disabled through project settings.
+
+### Git
+
+`sync.allow_merge` and `sync.allow_rebase` are intentionally absent. Automatic merge/rebase remains a protocol invariant.
+
+### Activity / Runs
+
+Client-owned projection. It must not become canonical state for STEP / review / evidence.
+
+## Navigation
+
+1. Open Project
 2. Overview
 3. Project / INIT
 4. Roadmap / STEP
-5. STEP detail
+5. STEP Detail
 6. Requirements
 7. Architecture / ADR
-8. Reviews & findings
-9. Audits & Reconcile
-10. Releases
-11. Skills
-12. Git workspace
-13. GitHub collaboration
-14. Knowledge / Project files
+8. Knowledge / Project Files
+9. Reviews & Findings
+10. Audits / Reconcile
+11. Releases
+12. Skills
+13. Git Workspace
+14. GitHub Collaboration
 15. Activity / Runs
 16. Agents & Models
-17. Policies & Settings
-18. Global Command Palette / local aliases
+17. Harness Updates
+18. Policies & Settings
+19. Global Command Palette
 
-## Реализационные требования, не являющиеся отдельными dashboard-экранами
+## Visual reference
 
-Они отражаются в архитектуре и launcher UX, но не требуют декоративных экранов:
+Visual language is derived from `ai-development-harness/website`:
+
+- `#050b14` base background;
+- `#0b1726` surfaces;
+- `#00d7f5`, `#2585ff`, `#8a52ff` accent range;
+- `#30d890`, `#ffb84a`, `#ff5364` status colors;
+- grid background;
+- translucent surfaces;
+- light theme through semantic token replacement.
+
+## Implementation architecture requirements
+
+These are product architecture requirements, not dashboard screens:
 
 - Nx monorepo;
+- TypeScript;
+- React browser-first UI;
 - npm package `@ai-development-harness/client`;
 - executable `harness-ui`;
-- Docker / Docker Compose как обязательное dev environment;
-- React + TypeScript + Vite;
-- Node.js local application service;
-- Codex и Claude Code как два обязательных first-class runtime adapter, без runtime-specific Harness domain model.
-
-The prototype intentionally includes universal Command Palette and raw-source fallback so new project-specific skills/commands remain usable before bespoke UI is added.
-
-
-## Current Harness update surface
-
-- `.project/harness-update.toml`
-- `.project/harness.lock.json`
-- `planning/harness-updates/`
-- `.agents/skills/update-harness/`
-- `.codex/agents/harness-updater.toml`
-- `docs/harness/UPDATES.md`
-
-## Generic UI behavior
-
-- UI locale is globally switchable without opening deep settings.
-- Blocked controls expose both **why** they are blocked and **how** to unblock them.
-- Table/list filters are interactive.
-- Empty result sets render a contextual empty state rather than a blank table.
-
-
-## Multi-runtime execution
-
-Current Harness adapter coverage:
-
-| Runtime | Repository adapter |
-|---|---|
-| Codex | `.codex/config.toml`, `.codex/agents/*.toml` |
-| Claude Code | `CLAUDE.md`, `.claude/settings.json`, `.claude/agents/*.md` |
-
-`CLAUDE.md` imports canonical `@AGENTS.md`. Core Harness skills remain single-source in `.agents/skills/`.
-
-Client UX rules:
-
-- active runtime starts as **not selected**;
-- runtime selection is explicit and globally visible;
-- there is no default active runtime;
-- Harness commands require both valid project context and explicit runtime;
-- switching project clears runtime selection;
-- switching runtime affects only future runs;
-- each run snapshots `projectRoot + runtimeId`;
-- failed/unavailable selected runtime never silently falls back to the other runtime;
-- Agents & Models shows adapter-specific model/effort/permission configuration while keeping canonical role semantics runtime-neutral.
-
-
-## Runtime-selection UI surface
-
-| Capability | UI surface |
-|---|---|
-| Explicit runtime selection | Global topbar `Codex / Claude Code` switch |
-| No selected runtime | Visible warning state; commands locked |
-| Runtime selection reason | Hover/focus tooltip on locked commands |
-| Adapter configuration | Agents & Models |
-| Runtime-specific files | Knowledge / Policies |
-| Immutable runtime per run | Run drawer / Activity context |
+- local Node application service;
+- `ClientApi` boundary;
+- replaceable transport/bootstrap;
+- no hardcoded localhost assumptions in UI domain model;
+- future secure local bridge may support hosted UI without cloud execution.
