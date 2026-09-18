@@ -18,7 +18,7 @@
     if (!("DecompressionStream" in window)) throw new Error("Browser does not support DecompressionStream(gzip)");
     const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
     const html=await new Response(stream).text();
-    const demoScript='<script src="assets/execution-run-demo.js"><\\/script>';
+    const demoScript='<script src="assets/execution-run-demo.js"><'+'/script>';
     const enhanced=html.includes('</body>') ? html.replace('</body>', demoScript+'</body>') : html+demoScript;
     document.open(); document.write(enhanced); document.close();
   })().catch(err=>{
