@@ -1199,6 +1199,38 @@ UI должен строить итоговое состояние из реал
 
 ---
 
+## CLIENT-REQ-071 — Официальный runtime integration surface
+
+Runtime adapter должен использовать официальный программный integration surface runtime, если такой интерфейс существует и покрывает требуемый сценарий.
+
+Для текущих first-class runtime базовый путь интеграции:
+
+```text
+Codex       → Codex App Server
+Claude Code → Claude Agent SDK
+```
+
+Интерактивная TUI не должна автоматизироваться через распознавание терминального вывода, ANSI-последовательностей, псевдотерминал или эвристический парсинг prompt text как основной production integration path.
+
+Официальный integration surface должен использоваться для доступных возможностей, включая:
+
+- streaming output;
+- structured runtime events;
+- user-input requests;
+- approval / permission requests;
+- продолжение той же session / turn после ответа;
+- cancellation / interruption, если runtime это поддерживает.
+
+Если конкретная возможность отсутствует в официальном API, adapter может иметь ограниченный fallback, но:
+
+- fallback не должен подменять structured semantics эвристическим разбором свободного текста;
+- ограничение должно быть явно отражено в capability model runtime adapter;
+- UI не должен обещать возможность, которую выбранный adapter достоверно не поддерживает.
+
+**Stage:** MVP
+
+---
+
 # 24. Критерий готовности MVP
 
 MVP считается готовым, когда новый пользователь способен через клиент выполнить полный путь:
