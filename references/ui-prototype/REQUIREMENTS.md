@@ -998,7 +998,208 @@ STEP lifecycle определяется Harness protocol.
 
 ---
 
-# 23. Критерий готовности MVP
+# 23. MVP: выполнение команд в реальном времени
+
+## CLIENT-REQ-063 — Live execution surface
+
+Любая Harness-команда, выполняемая через runtime adapter, должна иметь единый live execution surface.
+
+Минимально показываются:
+
+- command;
+- runtime;
+- run status;
+- elapsed time;
+- model/runtime output;
+- errors / blockers;
+- final result.
+
+`ExecutionRun` является временной client-owned сущностью выполнения и не является STEP, Harness state или Activity history.
+
+Минимальные технические статусы:
+
+```text
+starting
+running
+waiting-for-input
+succeeded
+failed
+blocked
+cancelled
+```
+
+Статусы и этапы Harness вроде PLAN / IMPLEMENT / VERIFY / REVIEW / FIX / CLOSE не должны становиться альтернативной client-side state machine.
+
+**Stage:** MVP
+
+---
+
+## CLIENT-REQ-064 — Incremental output
+
+Runtime output должен поступать в UI по мере выполнения, а не только после завершения команды.
+
+Frontend contract должен позволять концептуально:
+
+```text
+start run
+subscribe to run events
+send input when requested
+cancel when supported
+reconnect to active run
+```
+
+Конкретный transport — SSE, WebSocket или иной механизм — этим требованием не фиксируется и остаётся заменяемым за `ClientApi`.
+
+**Stage:** MVP
+
+---
+
+## CLIENT-REQ-065 — Normalized runtime events
+
+Codex и Claude Code могут предоставлять execution output разными способами.
+
+Runtime adapter должен переводить доступные данные в общий клиентский поток событий.
+
+Минимальное ядро:
+
+```text
+run.started
+output.delta
+output.message
+interaction.required
+run.completed
+run.failed
+run.blocked
+run.cancelled
+```
+
+Дополнительные структурированные события допустимы, если runtime или deterministic tooling предоставляют их достоверно, например:
+
+```text
+activity.started
+activity.completed
+artifact.changed
+verification.result
+```
+
+Клиент не обязан превращать каждую строку stdout/stderr в искусственно структурированное событие.
+
+**Stage:** MVP
+
+---
+
+## CLIENT-REQ-066 — Free-form output не является protocol state
+
+Клиент не должен выводить Harness protocol state из свободного текста модели.
+
+Например фраза модели:
+
+```text
+Теперь выполняю review...
+```
+
+не является достаточным основанием считать REVIEW текущим состоянием protocol.
+
+Источниками структурированного состояния могут быть только:
+
+- Harness repository artifacts;
+- deterministic tooling;
+- structured runtime events;
+- данные runtime adapter с определённой семантикой.
+
+Если доступен только текстовый output, UI отображает его как текст, не превращая в protocol transition.
+
+**Stage:** MVP
+
+---
+
+## CLIENT-REQ-067 — Safe model output rendering
+
+Model/runtime output должен отображаться как недоверенный пользовательский контент.
+
+MVP должен поддерживать минимум:
+
+- incremental text;
+- Markdown;
+- lists;
+- tables;
+- links;
+- inline code;
+- code blocks;
+- syntax highlighting.
+
+При этом:
+
+- произвольный HTML не исполняется;
+- scripts не исполняются;
+- output санитизируется;
+- ANSI / terminal control sequences не получают возможность управлять browser UI.
+
+**Stage:** MVP
+
+---
+
+## CLIENT-REQ-068 — Interactive run
+
+Если runtime требует решения пользователя, текущий run может перейти в:
+
+```text
+waiting-for-input
+```
+
+Клиент должен позволять продолжить тот же run через runtime adapter.
+
+Для MVP достаточно типов взаимодействия:
+
+- free-form text;
+- confirmation / explicit choice.
+
+Если runtime поддерживает cancellation, UI предоставляет явное действие Cancel.
+
+Interactive input не создаёт отдельную orchestration-систему клиента и не изменяет Harness protocol semantics.
+
+**Stage:** MVP
+
+---
+
+## CLIENT-REQ-069 — Run переживает навигацию UI
+
+Активный run должен принадлежать local application service, а не жизненному циклу React-компонента.
+
+Переход между экранами не останавливает и не теряет run.
+
+После повторного открытия execution surface frontend должен иметь возможность получить состояние активного run по `runId` и снова подписаться на его события, пока local service сохраняет этот run активным.
+
+Долговременное хранение завершённых runs и Activity history этим требованием не вводится.
+
+**Stage:** MVP
+
+---
+
+## CLIENT-REQ-070 — Repository refresh after mutation
+
+После успешного завершения команды, способной изменить repository, клиент должен перечитать затронутые repository projections и Git state.
+
+Примеры:
+
+```text
+INIT PROJECT
+IMPLEMENT STEP-NNN
+FIX STEP-NNN
+RUN STEP-NNN
+QUICK FIX
+UPDATE HARNESS
+```
+
+Model output не является доказательством фактического изменения repository.
+
+UI должен строить итоговое состояние из реальных файлов, Harness artifacts, Git state и deterministic outputs после завершения mutation.
+
+**Stage:** MVP
+
+---
+
+# 24. Критерий готовности MVP
 
 MVP считается готовым, когда новый пользователь способен через клиент выполнить полный путь:
 
@@ -1062,7 +1263,7 @@ PR
 
 ---
 
-# 24. Приоритет источников
+# 25. Приоритет источников
 
 При расхождении:
 
