@@ -2,7 +2,7 @@
 
 Откройте `index.html` в браузере. Внешних зависимостей нет.
 
-Это UX/UI reference клиента AI Development Harness, а не отдельная реализация Harness protocol.
+Это UX/UI reference **целевого клиента** AI Development Harness, а не отдельная реализация Harness protocol. Прототип может показывать Post-MVP surfaces; обязательный scope первой версии фиксирует `REQUIREMENTS.md`.
 
 ## Baseline
 
@@ -21,7 +21,7 @@ Protocol invariants не превращаются в toggles: mandatory independ
 
 - Open Project + validation states;
 - Overview + корректная семантика `NEXT STEP` как рекомендации;
-- Project / INIT;
+- Project / INIT, включая pre-INIT сценарий `PROJECT_BRIEF.local.md → INIT PROJECT → repository refresh`;
 - Roadmap / STEP;
 - STEP Detail с Contract / Plan / Evidence / Review / History;
 - Requirements;
@@ -79,4 +79,5 @@ Harness protocol / requirements / Accepted ADR
 ```
 
 Продуктовый brief: [`BRIEF.md`](BRIEF.md).
+Требования и scope MVP: [`REQUIREMENTS.md`](REQUIREMENTS.md).
 Функциональное покрытие: [`COVERAGE.md`](COVERAGE.md).
