@@ -11,6 +11,9 @@ UI — графическая оболочка над repository-based Harness p
 - Read-only views строятся из repository / Git projections.
 - Commands передаются explicit runtime adapter.
 - Каждый run фиксирует `projectRoot + runtimeId`.
+- Live execution в MVP идёт через временный client-owned `ExecutionRun` и нормализованный event stream.
+- Свободный текст модели не считается Harness protocol state.
+- После mutation итоговое состояние перечитывается из repository / Git.
 - Runtime не выбирается автоматически.
 
 ## Client lifecycle
@@ -30,7 +33,7 @@ UI — графическая оболочка над repository-based Harness p
 | Project switch | Topbar |
 | Explicit runtime | Topbar |
 | Command Palette | Global |
-| Immutable run context | RUN drawer / Activity |
+| Immutable run context | Execution Run surface |
 
 ## Canonical Harness commands
 
@@ -94,6 +97,22 @@ Independent review is always required. Specialized reviewers can be `auto` or `a
 
 `sync.allow_merge` and `sync.allow_rebase` are intentionally absent. Automatic merge/rebase remains a protocol invariant.
 
+### Execution Run
+
+MVP capability для живого выполнения Harness-команд.
+
+- единый execution surface для runtime commands;
+- incremental output;
+- normalized runtime events;
+- safe Markdown/code rendering;
+- `waiting-for-input` для интерактивного продолжения;
+- active run сохраняется при навигации UI;
+- transport не фиксируется как SSE/WebSocket на уровне product contract;
+- protocol phases отображаются только из достоверных structured sources;
+- после mutation repository projections и Git state перечитываются.
+
+Это не Activity history и не новый source of truth.
+
 ### Activity / Runs
 
 Post-MVP client-owned projection. It must not become canonical state for STEP / review / evidence. Предпочтительное хранение execution metadata — local-only daily JSONL под `.project/local/activity/`.
@@ -113,6 +132,7 @@ Post-MVP client-owned projection. It must not become canonical state for STEP / 
 - Harness Updates;
 - Policies & Settings;
 - Command Palette;
+- live Execution Run surface для runtime commands;
 - dark theme + accessibility baseline.
 
 ### Post-MVP
