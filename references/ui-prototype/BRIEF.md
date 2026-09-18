@@ -112,6 +112,24 @@ projectRoot + runtimeId
 
 После открытия валидного проекта клиент фиксирует `projectRoot`.
 
+### Pre-INIT lifecycle
+
+Для valid pre-INIT repository клиент должен покрывать первый пользовательский сценарий целиком:
+
+```text
+Open repository
+→ create/edit PROJECT_BRIEF.local.md
+→ select runtime
+→ INIT PROJECT
+→ refresh repository state
+→ project.initialized = true
+→ Overview
+```
+
+`PROJECT_BRIEF.local.md` остаётся local-only файлом и не превращается во внутреннее состояние клиента. Сам клиент не генерирует REQ / ADR / STEP вместо Harness — он запускает канонический `INIT PROJECT`.
+
+Если проект уже инициализирован, обычный повторный `INIT PROJECT` не предлагается; стандартный maintenance-path — `RECONCILE PROJECT`.
+
 Для UX-прототипа допустим **Demo Preview**: экраны можно просматривать без project context, но реальные command actions остаются заблокированы.
 
 ## 6. Основная информационная архитектура
@@ -435,21 +453,37 @@ CLAUDE.md
 
 ## 17. Activity / Runs
 
-Этот экран полезен, но важно явно считать его **client-owned**, пока Harness не имеет canonical universal run log.
+Это **Post-MVP** capability.
 
-Run должен хранить минимум:
+Activity важно явно считать **client-owned**, а не canonical Harness state. Предпочтительное локальное хранение:
+
+```text
+.project/local/activity/
+├── 2026-09-18.jsonl
+├── 2026-09-19.jsonl
+└── ...
+```
+
+Логи не коммитятся. Execution metadata собирает client/runtime layer, а не агент через self-report.
+
+Минимально полезные данные:
 
 ```text
 runId
 projectRoot
 runtimeId
 command
+STEP / role
+requested/resolved model
+reasoning/effort
 start/end time
 result
 links to durable repository artifacts
 ```
 
-Не использовать Activity как альтернативный source of truth для STEP/review/evidence.
+Не сохранять hidden chain of thought, полный context window или произвольные секреты.
+
+Не использовать Activity как альтернативный source of truth для STEP/review/evidence. Аналитика по runtime/model показывает факты, но не объявляет одну модель автоматически «лучше» другой.
 
 ## 18. Дизайн
 
@@ -627,6 +661,7 @@ references/ui-prototype/index.html
 references/ui-prototype/README.md
 references/ui-prototype/COVERAGE.md
 references/ui-prototype/BRIEF.md
+references/ui-prototype/REQUIREMENTS.md
 ```
 
 При расхождении приоритет:
@@ -637,7 +672,45 @@ Harness protocol / REQ / Accepted ADR
     > visual experiments / screenshots
 ```
 
-## 26. Текущий baseline
+## 26. Этапы реализации
+
+Точный scope и acceptance criteria зафиксированы в [`REQUIREMENTS.md`](REQUIREMENTS.md).
+
+### MVP
+
+MVP обязан покрывать end-to-end путь без внешнего терминала:
+
+```text
+pre-INIT repository
+→ PROJECT_BRIEF.local.md
+→ INIT PROJECT
+→ initialized project
+→ NEXT STEP / STEP
+→ RUN
+→ Review / Evidence
+→ GIT CHECK
+→ COMMIT
+→ PUSH
+→ PR
+```
+
+### Post-MVP
+
+- Activity / Runs;
+- JSONL execution telemetry;
+- runtime/model provenance и analytics;
+- отдельный GitHub Collaboration screen;
+- полноценная light theme;
+- английский UI;
+- live repository watcher.
+
+### Architectural reserve
+
+- hosted UI;
+- secure local bridge;
+- remote pairing.
+
+## 27. Текущий baseline
 
 Бриф синхронизирован с публичным Harness **v0.3.0**.
 
@@ -651,10 +724,8 @@ Harness protocol / REQ / Accepted ADR
 - разделение Git workflow policy и repository integrity policy;
 - отсутствие ложных `sync.allow_merge` / `sync.allow_rebase` toggles.
 
-## 27. Открытые вопросы
+## 28. Открытые вопросы
 
-1. Нужен ли persistent client-owned run store или достаточно session-level history + links на repository artifacts?
-2. Какой transport считать первым production target: локальный Node service, desktop bridge или оба через общий интерфейс?
-3. Нужно ли в первой версии показывать runtime account identity, или достаточно availability/authenticated/selected state?
-4. Нужен ли file watcher с live updates или достаточно explicit refresh + Git events?
-5. Когда переходить от reference prototype к reusable `ui-kit` и component playground внутри Nx?
+1. Какой transport считать первым production target: локальный Node service, desktop bridge или оба через общий интерфейс?
+2. Нужно ли в первой версии показывать runtime account identity, или достаточно availability/authenticated/selected state?
+3. Когда переходить от reference prototype к reusable `ui-kit` и component playground внутри Nx?
