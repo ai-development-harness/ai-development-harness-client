@@ -200,3 +200,8 @@ These are product architecture requirements, not dashboard screens:
 - replaceable transport/bootstrap;
 - no hardcoded localhost assumptions in UI domain model;
 - future secure local bridge may support hosted UI without cloud execution.
+- runtime adapters prefer official programmable integration surfaces over TUI automation;
+- Codex adapter baseline: Codex App Server;
+- Claude Code adapter baseline: Claude Agent SDK;
+- PTY/stdout prompt scraping is not the primary production integration path;
+- adapter capability model must expose unsupported interactive/streaming features instead of guessing support.
