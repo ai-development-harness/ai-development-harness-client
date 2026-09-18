@@ -635,6 +635,9 @@ result
 - активный run не теряется при навигации между экранами;
 - transport остаётся заменяемым за `ClientApi`, без фиксации SSE/WebSocket на уровне product requirements;
 - после mutation client перечитывает repository и Git state вместо доверия textual self-report модели.
+- runtime adapters используют официальные программные integration surfaces, когда они доступны: Codex App Server для Codex и Claude Agent SDK для Claude Code;
+- автоматизация интерактивной TUI через PTY/stdin/stdout parsing не является основным production integration path;
+- capabilities adapter должны явно отражать поддержку streaming, structured input, approvals, cancellation и других runtime-specific возможностей.
 
 Долговременная история завершённых запусков, telemetry и analytics остаются отдельной Post-MVP capability **Activity / Runs**.
 
