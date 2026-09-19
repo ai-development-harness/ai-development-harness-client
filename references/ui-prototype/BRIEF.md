@@ -121,7 +121,7 @@ projectRoot + runtimeId
 Open repository
 → create/edit PROJECT_BRIEF.local.md
 → select runtime
-→ PROJECT INIT
+→ GIT PROJECT INIT
 → refresh repository state
 → project.initialized = true
 → Overview
@@ -237,7 +237,7 @@ UI не должен помечать STEP выполненным без обя�
 
 Independent reviewer обязателен и не отключается настройкой.
 
-Начиная с Harness v0.3.0 есть project-specific policy:
+В актуальном Harness v0.4.0 есть project-specific policy:
 
 ```yaml
 review:
@@ -785,16 +785,16 @@ MVP обязан покрывать end-to-end путь без внешнего 
 
 ```text
 pre-INIT repository
-→ PROJECT_BRIEF.local.md
-→ PROJECT INIT
+→ GIT PROJECT_BRIEF.local.md
+→ GIT PROJECT INIT
 → initialized project
 → STEP NEXT / STEP
 → RUN
 → Review / Evidence
 → GIT CHECK
-→ COMMIT
-→ PUSH
-→ PR
+→ GIT COMMIT
+→ GIT PUSH
+→ GIT PR
 ```
 
 ### Post-MVP
