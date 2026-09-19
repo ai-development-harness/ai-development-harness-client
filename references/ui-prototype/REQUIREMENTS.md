@@ -244,6 +244,8 @@ rootCommand
 
 Последующее переключение project/runtime не меняет context уже запущенной execution.
 
+Harness Execution Status runtime-agnostic. Для бесшовного reattach клиент может хранить минимальную local-only binding `executionId → runtimeId / runtimeSessionId`; это не Activity analytics и не canonical Harness state. Если binding после restart недоступна, UI требует новый explicit runtime selection и не применяет automatic fallback.
+
 **Stage:** MVP
 
 ---
@@ -1417,6 +1419,8 @@ resolver status: RESUME | NEXT | DONE | BLOCKED | NOT_FOUND
 ```
 
 Повторный явный запуск той же running root command должен отображаться как resume существующей execution, а не как новая параллельная execution.
+
+Поскольку Execution Status не хранит runtime identity, automatic reattach использует client-owned local binding, если она доступна. При её отсутствии пользователь явно выбирает runtime перед resume.
 
 Execution Status является operational state Harness и не является Activity analytics или product evidence.
 
