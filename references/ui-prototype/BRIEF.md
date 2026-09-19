@@ -51,7 +51,7 @@ UI читает и изменяет состояние через репозит
 
 ### UI не дублирует orchestration
 
-Например `RUN STEP-NNN` исполняет Harness runtime adapter. Клиент лишь передаёт:
+Например `STEP RUN STEP-NNN` исполняет Harness runtime adapter. Клиент лишь передаёт:
 
 ```text
 projectRoot
@@ -104,13 +104,14 @@ projectRoot + runtimeId
 
 При запуске без однозначного project path пользователь выбирает локальный repository.
 
-Клиент должен отличать минимум три состояния:
+Клиент должен отличать минимум четыре состояния:
 
 1. valid initialized Harness project;
 2. valid pre-INIT Harness project;
-3. ordinary Git repository / invalid Harness project.
+3. ordinary Git repository / Harness not found;
+4. invalid or damaged Harness project.
 
-После открытия валидного проекта клиент фиксирует `projectRoot`.
+После открытия валидного проекта клиент фиксирует `projectRoot`, читает Harness release и проверяет unresolved executions.
 
 ### Pre-INIT lifecycle
 
@@ -120,15 +121,15 @@ projectRoot + runtimeId
 Open repository
 → create/edit PROJECT_BRIEF.local.md
 → select runtime
-→ INIT PROJECT
+→ PROJECT INIT
 → refresh repository state
 → project.initialized = true
 → Overview
 ```
 
-`PROJECT_BRIEF.local.md` остаётся local-only файлом и не превращается во внутреннее состояние клиента. Сам клиент не генерирует REQ / ADR / STEP вместо Harness — он запускает канонический `INIT PROJECT`.
+`PROJECT_BRIEF.local.md` остаётся local-only файлом и не превращается во внутреннее состояние клиента. Сам клиент не генерирует REQ / ADR / STEP вместо Harness — он запускает canonical `PROJECT INIT`.
 
-Если проект уже инициализирован, обычный повторный `INIT PROJECT` не предлагается; стандартный maintenance-path — `RECONCILE PROJECT`.
+Если проект уже инициализирован, обычный повторный `PROJECT INIT` не предлагается; стандартный maintenance-path — `PROJECT RECONCILE`.
 
 Для UX-прототипа допустим **Demo Preview**: экраны можно просматривать без project context, но реальные command actions остаются заблокированы.
 
@@ -178,27 +179,38 @@ Overview должен отвечать на вопросы:
 - какой runtime выбран;
 - валиден ли Harness;
 - есть ли blockers / findings;
+- есть ли unresolved executions;
 - какие STEP доступны;
 - что Harness рекомендует делать следующим;
 - в каком состоянии Git;
 - есть ли Harness update.
 
-### NEXT STEP
+### STEP NEXT
 
-Критично не превращать `NEXT STEP` в workflow lock.
+`STEP NEXT` остаётся рекомендацией, а не global workflow lock.
 
-UI должен показывать, например:
+Перед выбором нового STEP Harness resolver проверяет unresolved executions. Если есть interrupted STEP-related execution, primary recommendation может быть resume существующей работы:
 
 ```text
-Рекомендуемый следующий шаг
+Есть незавершённая работа
+
+Root:
+STEP RUN STEP-017
+
+Resume:
+STEP IMPLEMENT STEP-017
+```
+
+Если unresolved STEP executions нет, UI показывает обычную рекомендацию:
+
+```text
+Рекомендуемый следующий STEP
 STEP-024
 Рекомендован Harness
 Других доступных STEP: 2
 ```
 
-Tooltip / пояснение:
-
-> Это рекомендация, а не обязательный следующий шаг. В проекте могут быть другие незаблокированные STEP, доступные параллельно или в другом порядке.
+Явно запрошенные независимые Project / Git / Harness commands остаются допустимыми; CTS не задаёт глобальный порядок отдельных invocations.
 
 ## 8. STEP Detail
 
@@ -247,33 +259,40 @@ always
 
 UI должен объяснять это прямо рядом с настройкой.
 
-## 10. RUN STEP policy
+## 10. STEP RUN policy
 
-Harness v0.3.0 содержит:
-
-```yaml
-execution:
-  maxFixReviewCycles: 3
-```
-
-Допустимый диапазон: **1–5**.
-
-В Settings нужен понятный контрол диапазона и визуальное отражение значения в RUN STEP flow:
+Harness v0.4.0 использует root orchestration command:
 
 ```text
-PLAN
-→ IMPLEMENT
-→ deterministic verification
-→ REVIEW
-→ FIX ↔ REVIEW × N
-→ CLOSE
+STEP RUN STEP-NNN
 ```
 
-При исчерпании лимита RUN должен остановиться без объявления success.
+Для coding flow canonical child transitions определяет CTS:
+
+```text
+STEP PLAN STEP-NNN
+  --SUCCESS-->
+STEP IMPLEMENT STEP-NNN
+  --SUCCESS-->
+STEP REVIEW STEP-NNN
+  --FAIL-->
+STEP FIX STEP-NNN
+  --SUCCESS-->
+STEP REVIEW STEP-NNN
+```
+
+`VERIFY` и `CLOSE` не являются отдельными canonical commands:
+
+- deterministic verification показывается как activity/evidence;
+- после REVIEW PASS remaining finalization выполняется root `STEP RUN STEP-NNN`;
+- `execution.maxFixReviewCycles` ограничивает FIX ↔ REVIEW и имеет диапазон **1–5**;
+- исчерпание лимита не отображается как success.
+
+Live Execution surface должен показывать `executionId`, `mode`, `rootCommand`, `current.command`, attempt, execution status и command result отдельно от runtime stream.
 
 ## 11. Skills
 
-`FIND SKILL` использует:
+`SKILL FIND` использует:
 
 ```yaml
 skills:
@@ -288,18 +307,18 @@ UI поиска skills должен использовать именно это
 Поиск и установка — разные действия:
 
 ```text
-FIND SKILL
+SKILL FIND
 → inspect candidates
 → durable search report
 → explicit user selection
-→ INSTALL SKILL
+→ SKILL INSTALL
 ```
 
 Third-party skill считать внешней dependency: показать source, ref/commit, license, provenance и safety notes.
 
 ## 12. AUDIT и RECONCILE нельзя объединять
 
-### AUDIT STEP-NNN
+### STEP AUDIT STEP-NNN
 
 Проверяет конкретный STEP / bounded area против его контракта.
 
@@ -307,7 +326,7 @@ Third-party skill считать внешней dependency: показать sou
 - production code mutation запрещена;
 - defects становятся findings / corrective STEP.
 
-### RECONCILE PROJECT
+### PROJECT RECONCILE
 
 Project-wide reconciliation:
 
@@ -327,16 +346,17 @@ UI может размещать их рядом, но смысл и дейст�
 
 Нужен отдельный экран.
 
-Команды:
+Canonical commands:
 
 ```text
-CHECK HARNESS UPDATE [TO <tag>]
-UPDATE HARNESS [TO <tag>]
+HARNESS UPDATE CHECK [TO <tag>]
+HARNESS UPDATE APPLY [TO <tag>]
+HARNESS UPDATE CHECK [TO <tag>] > APPLY
 ```
 
-`CHECK` — read-only.
+`HARNESS UPDATE CHECK` — read-only.
 
-`UPDATE` разрешается только после успешного check для того же target и route.
+`HARNESS UPDATE APPLY` может reuse matching CHECK только если Harness Execution Status подтверждает тот же target / route / lock; иначе выполняется fresh CHECK.
 
 На экране показывать:
 
@@ -348,7 +368,9 @@ UPDATE HARNESS [TO <tag>]
 - ownership changes;
 - blockers;
 - affected managed paths;
-- post-update handoff: inspect diff → GIT CHECK → COMMIT → PUSH → PR.
+- post-update handoff: inspect diff → `GIT CHECK > COMMIT > PUSH > PR`.
+
+Отдельный client-owned update-state файл для handoff не нужен: v0.4.0 хранит durable metadata в общем Execution Status.
 
 ## 14. Policies & Settings
 
@@ -393,10 +415,10 @@ Protocol invariants:
 
 - mandatory independent review;
 - запрет automatic merge/rebase;
-- QUICK FIX safety boundary;
+- PROJECT QUICK FIX safety boundary;
 - update security boundaries;
 - immutable release tags;
-- один primary result команды `NEXT STEP`.
+- один primary result команды `STEP NEXT`.
 
 Если правило нельзя безопасно отключить — UI не должен рисовать toggle, создающий ложное впечатление конфигурируемости.
 
@@ -414,19 +436,26 @@ Protocol invariants:
 - commit type / scope;
 - blockers.
 
-Поддерживаемые действия:
+Поддерживаемые canonical actions:
 
 ```text
 GIT CHECK
-COMMIT
-PUSH
-PR
-SYNC
+GIT COMMIT
+GIT COMMIT: <optional hint>
+GIT PUSH
+GIT PR
+GIT SYNC
 ```
 
-Никакого force push.
+И explicit publication chain:
 
-Automatic merge/rebase не является настройкой SYNC.
+```text
+GIT CHECK > COMMIT > PUSH > PR
+```
+
+Перед запуском chain UI показывает deterministic preflight и normalized sequence.
+
+Никакого force push. Automatic merge/rebase не является настройкой `GIT SYNC`.
 
 ## 16. Agents & Models
 
@@ -453,9 +482,23 @@ CLAUDE.md
 
 ## 17. Activity / Runs
 
-Это **Post-MVP** capability.
+Это **Post-MVP** client-owned capability.
 
-Activity важно явно считать **client-owned**, а не canonical Harness state. Предпочтительное локальное хранение:
+Её нужно чётко отделять от Harness Execution Status:
+
+```text
+.project/local/execution/execution-status.json
+→ operational recovery state Harness
+→ MVP
+
+.project/local/activity/*.jsonl
+→ observability / telemetry / analytics клиента
+→ Post-MVP
+```
+
+Execution Status может содержать completed records ради recovery/handoff, но не является audit log или Activity storage.
+
+Предпочтительное client-owned хранение Activity:
 
 ```text
 .project/local/activity/
@@ -464,26 +507,9 @@ Activity важно явно считать **client-owned**, а не canonical 
 └── ...
 ```
 
-Логи не коммитятся. Execution metadata собирает client/runtime layer, а не агент через self-report.
+Логи не коммитятся. Runtime/model/session/effort metadata собирает client/runtime layer, а не агент через self-report.
 
-Минимально полезные данные:
-
-```text
-runId
-projectRoot
-runtimeId
-command
-STEP / role
-requested/resolved model
-reasoning/effort
-start/end time
-result
-links to durable repository artifacts
-```
-
-Не сохранять hidden chain of thought, полный context window или произвольные секреты.
-
-Не использовать Activity как альтернативный source of truth для STEP/review/evidence. Аналитика по runtime/model показывает факты, но не объявляет одну модель автоматически «лучше» другой.
+Не сохранять hidden chain of thought, полный context window или произвольные секреты. Аналитика показывает факты, но не объявляет одну модель автоматически «лучше» другой.
 
 ## 18. Дизайн
 
@@ -595,51 +621,94 @@ en
 - replaceable bootstrap / transport;
 - отсутствие hardcoded localhost assumptions в UI domain layer.
 
-Принцип:
+Основной путь:
 
 ```text
-UI
-  ↓ ClientApi
+React UI
+   ↓
+ClientApi
+   ↓
 transport / local bridge
-  ↓
-repository + Git + runtime adapters
+   ↓
+local application service
+   ├── repository / Git projections
+   ├── Harness command preflight / CTS
+   ├── Harness Execution Status / resolver
+   └── runtime adapter
+          ↓
+     Codex App Server / Claude Agent SDK
 ```
 
-Будущая hosted UI не должна автоматически означать cloud execution.
+Клиент не hardcode-ит transition graph и не выводит protocol state из текста модели.
+
+### Command preflight и chains
+
+До dispatch command/chain проходит canonical Harness validation:
+
+```text
+tokenize
+→ normalize
+→ transition-table
+→ runtime-preconditions
+→ dispatch
+```
+
+Structural error вроде `INVALID_CHAIN` останавливает выполнение до первого segment.
+
+Command Palette и специализированные surfaces могут отправлять explicit chains, например:
+
+```text
+GIT CHECK > COMMIT > PUSH > PR
+STEP PLAN STEP-017 > IMPLEMENT > REVIEW
+STEP REVIEW STEP-017 > FIX > REVIEW
+HARNESS UPDATE CHECK TO <tag> > APPLY
+```
 
 ### Выполнение команд в MVP
 
-Команда, запущенная через runtime adapter, должна иметь живое визуальное представление выполнения.
+UI строит `ExecutionRunViewModel` как projection над Harness Execution Status + runtime event stream, а не создаёт второй canonical execution store.
 
-Клиент использует временную client-owned сущность `ExecutionRun`, которая хранит минимум:
+Минимальный context:
 
 ```text
-runId
 projectRoot
 runtimeId
-command
-status
+executionId
+mode
+rootCommand
+current.command
+current.attempt
+execution.status
+current.result
+runtime/UI state
 events
-result
 ```
 
-`ExecutionRun` не является Harness state и не заменяет STEP / review / evidence / Git artifacts.
+Важно разделять:
+
+```text
+Harness execution status: running | complete | blocked
+Command result:           SUCCESS | PASS | FAIL | BLOCKED
+Resolver status:          RESUME | NEXT | DONE | BLOCKED | NOT_FOUND
+Runtime/UI state:         connecting | streaming | waiting-for-input | disconnected | cancelled
+```
 
 Основные правила:
 
 - output поступает в UI по мере выполнения;
-- Codex и Claude Code нормализуются через общий event contract runtime adapters;
-- свободный текст модели не используется для вывода protocol transitions;
-- structured state показывается только по Harness artifacts, deterministic tooling или достоверным runtime events;
-- запрос пользователя может временно перевести run в `waiting-for-input`;
-- активный run не теряется при навигации между экранами;
-- transport остаётся заменяемым за `ClientApi`, без фиксации SSE/WebSocket на уровне product requirements;
-- после mutation client перечитывает repository и Git state вместо доверия textual self-report модели.
-- runtime adapters используют официальные программные integration surfaces, когда они доступны: Codex App Server для Codex и Claude Agent SDK для Claude Code;
-- автоматизация интерактивной TUI через PTY/stdin/stdout parsing не является основным production integration path;
-- capabilities adapter должны явно отражать поддержку streaming, structured input, approvals, cancellation и других runtime-specific возможностей.
+- Codex и Claude Code нормализуются через общий runtime event contract;
+- свободный текст модели не используется для protocol transitions;
+- runtime events не переопределяют Harness Execution Status;
+- structured interaction может временно дать UI state `waiting-for-input`;
+- active execution переживает navigation;
+- после browser/runtime restart клиент использует `resolve-next-command.py --json`;
+- unresolved executions может быть несколько одновременно;
+- transport остаётся заменяемым за `ClientApi`;
+- после mutation client перечитывает repository и Git state;
+- Codex использует Codex App Server, Claude Code — Claude Agent SDK;
+- PTY/stdin/stdout parsing TUI не является primary production integration path.
 
-Долговременная история завершённых запусков, telemetry и analytics остаются отдельной Post-MVP capability **Activity / Runs**.
+Долговременная история/analytics остаётся отдельной Post-MVP capability **Activity / Runs**.
 
 ## 23. Будущий remote bridge
 
@@ -717,9 +786,9 @@ MVP обязан покрывать end-to-end путь без внешнего 
 ```text
 pre-INIT repository
 → PROJECT_BRIEF.local.md
-→ INIT PROJECT
+→ PROJECT INIT
 → initialized project
-→ NEXT STEP / STEP
+→ STEP NEXT / STEP
 → RUN
 → Review / Evidence
 → GIT CHECK
@@ -746,17 +815,26 @@ pre-INIT repository
 
 ## 27. Текущий baseline
 
-Бриф синхронизирован с публичным Harness **v0.3.0**.
+Бриф синхронизирован с публичным Harness **v0.4.0**.
 
-Ключевые изменения v0.3.0, которые клиент обязан учитывать:
+Ключевые возможности v0.4.0, которые клиент обязан учитывать:
 
-- configurable `execution.maxFixReviewCycles`;
+- canonical namespaced command interface;
+- `.project/command-transitions.json` как machine-readable CTS source of truth;
+- deterministic `validate-command.py` до dispatch;
+- explicit same-domain chains и shorthand inheritance;
+- universal crash-safe `.project/local/execution/execution-status.json`;
+- execution modes `single | chain | orchestration`;
+- resolver statuses `RESUME | NEXT | DONE | BLOCKED | NOT_FOUND`;
+- `STEP NEXT` с приоритетом unresolved STEP executions;
+- restart-safe `STEP RUN STEP-NNN`;
+- Plan status / revision / basis / planned-at;
+- `execution.maxFixReviewCycles = 1..5`;
 - `review.security = auto | always`;
 - `review.tests = auto | always`;
 - `skills.search.maxResults = 1..10`;
-- усиленная deterministic validation policies;
-- разделение Git workflow policy и repository integrity policy;
-- отсутствие ложных `sync.allow_merge` / `sync.allow_rebase` toggles.
+- Harness update handoff через общий Execution Status;
+- отсутствие automatic merge/rebase / force-push shortcuts.
 
 ## 28. Открытые вопросы
 
