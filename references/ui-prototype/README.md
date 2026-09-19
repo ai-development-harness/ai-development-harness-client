@@ -2,6 +2,8 @@
 
 Откройте `index.html` в браузере. Внешних зависимостей нет.
 
+Prototype хранится как обычные читаемые HTML/CSS/JS файлы. Он **не использует gzip/base64 payload, `DecompressionStream` или runtime reconstruction HTML**.
+
 Это UX/UI reference **целевого клиента** AI Development Harness, а не отдельная реализация Harness protocol. Прототип может показывать Post-MVP surfaces; обязательный scope первой версии фиксирует `REQUIREMENTS.md`.
 
 ## Baseline
@@ -16,6 +18,19 @@ Reference синхронизирован с публичным Harness **v0.3.0*
 - `skills.search.maxResults` — 1..10.
 
 Protocol invariants не превращаются в toggles: mandatory independent review, QUICK FIX safety boundary и запрет automatic merge/rebase остаются фиксированными правилами.
+
+## Структура reference
+
+```text
+references/ui-prototype/
+├── index.html
+└── assets/
+    ├── prototype.css
+    ├── prototype.js
+    └── execution-run-demo.js
+```
+
+Это намеренно обычный статический browser prototype: файлы можно читать и ревьюить напрямую в Git diff.
 
 ## Что есть в прототипе
 
