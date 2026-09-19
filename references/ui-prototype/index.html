@@ -114,7 +114,7 @@
             <div style="flex:1">
               <strong>Незавершённое выполнение обнаружено</strong>
               <p><span class="mono">exec-017 · orchestration</span> · root <span class="mono">STEP RUN STEP-017</span> · resolver <strong>RESUME</strong> → <span class="mono">STEP IMPLEMENT STEP-017</span> · attempt 2.</p>
-              <div class="row"><button class="btn primary" type="button" data-recovery-run>Продолжить execution</button><button class="btn ghost" type="button" data-command="STEP NEXT">STEP NEXT</button></div>
+              <div class="row"><button class="btn primary" type="button" data-command="STEP IMPLEMENT STEP-017" data-recovery-run>Продолжить execution</button><button class="btn ghost" type="button" data-command="STEP NEXT">STEP NEXT</button></div>
             </div>
           </div>
           <div class="grid four">
@@ -179,7 +179,7 @@ Harness update: not checked</div></article>
           <div class="page-head"><div class="grow"><div class="eyebrow">ROADMAP</div><h1>STEP</h1><p>Task contracts из repository. STEP NEXT — рекомендация, а не обязательный порядок исполнения.</p></div><input class="input" id="stepFilter" style="max-width:260px" placeholder="Фильтр STEP"></div>
           <div class="table-wrap"><table><thead><tr><th>STEP</th><th>Status</th><th>Priority</th><th>Phase</th><th>Depends on</th><th>REQ</th></tr></thead><tbody id="roadmapRows">
             <tr><td><strong>STEP-014</strong><br>Runtime adapters</td><td><span class="pill"><span class="dot success"></span>DONE</span></td><td>P0</td><td>Core</td><td>—</td><td>REQ-009, REQ-010</td></tr>
-            <tr><td><strong>STEP-017</strong><br>Live execution surface</td><td><span class="pill"><span class="dot warning"></span>PLANNED</span></td><td>P0</td><td>MVP</td><td>STEP-014</td><td>REQ-063…071</td></tr>
+            <tr><td><strong>STEP-017</strong><br>Live execution surface</td><td><span class="pill"><span class="dot warning"></span>PLANNED</span></td><td>P0</td><td>MVP</td><td>STEP-014</td><td>REQ-063…074</td></tr>
             <tr><td><strong>STEP-018</strong><br>Git Workspace</td><td><span class="pill">READY</span></td><td>P1</td><td>MVP</td><td>STEP-014</td><td>REQ-035…037</td></tr>
             <tr><td><strong>STEP-022</strong><br>Activity telemetry</td><td><span class="pill">POST-MVP</span></td><td>P2</td><td>Later</td><td>STEP-017</td><td>REQ-049…055</td></tr>
           </tbody></table></div>
