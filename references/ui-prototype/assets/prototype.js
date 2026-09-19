@@ -199,14 +199,14 @@ skills:
     btn.addEventListener("click", () => {
       btn.disabled = true;
       result.hidden = false;
-      result.innerHTML = "<strong>Проверяю route...</strong><p>Текущий release: v0.3.0</p>";
+      result.innerHTML = "<strong>HARNESS UPDATE CHECK</strong><p>Текущий release: v0.4.0 · target: latest</p>";
       setTimeout(() => {
-        result.innerHTML = "<strong>CHECK PASS</strong><p>Доступен безопасный route v0.3.0 → v0.4.0. Matching CHECK сохранён.</p>";
-        apply.disabled = false;
+        result.innerHTML = "<strong>NO_UPDATE</strong><p>v0.4.0 уже является latest. При наличии нового target matching CHECK metadata хранится в общем Execution Status.</p>";
+        apply.disabled = true;
         btn.disabled = false;
       }, 850);
     });
-    apply.addEventListener("click", () => toast("Demo: UPDATE HARNESS не выполняет реальную mutation"));
+    apply.addEventListener("click", () => toast("Demo: HARNESS UPDATE APPLY требует matching CHECK для target/route/lock"));
   }
 
   function setupSkills() {
@@ -215,6 +215,94 @@ skills:
     find.addEventListener("click", () => {
       $("#skillCandidates").hidden = false;
       toast("Shortlist построен по skills.search.maxResults");
+    });
+  }
+
+  function demoPreflight(raw) {
+    const value = raw.trim();
+    if (!value) return { valid: false, code: "EMPTY_COMMAND", lines: [] };
+
+    if (value === "GIT PR > COMMIT") {
+      return {
+        valid: false,
+        code: "INVALID_CHAIN",
+        lines: [
+          "transition GIT PR -> GIT COMMIT is not allowed",
+          "Ни один segment не будет выполнен."
+        ]
+      };
+    }
+
+    if (value === "GIT CHECK > COMMIT > PUSH > PR") {
+      return {
+        valid: true,
+        code: "VALID_CHAIN",
+        lines: [
+          "GIT CHECK --PASS--> GIT COMMIT",
+          "GIT COMMIT --SUCCESS--> GIT PUSH",
+          "GIT PUSH --SUCCESS--> GIT PR"
+        ]
+      };
+    }
+
+    if (value === "STEP REVIEW STEP-017 > FIX > REVIEW") {
+      return {
+        valid: true,
+        code: "VALID_CHAIN",
+        lines: [
+          "STEP REVIEW STEP-017 --FAIL--> STEP FIX STEP-017",
+          "STEP FIX STEP-017 --SUCCESS--> STEP REVIEW STEP-017"
+        ]
+      };
+    }
+
+    if (/^(PROJECT|STEP|SKILL|GITHUB|RELEASE|HARNESS|GIT)\b/.test(value)) {
+      return { valid: true, code: "VALID_COMMAND", lines: [value] };
+    }
+
+    return {
+      valid: false,
+      code: "MISSING_DOMAIN",
+      lines: ["Первый segment должен начинаться с canonical DOMAIN."]
+    };
+  }
+
+  function renderPreflight(raw, target) {
+    const result = demoPreflight(raw);
+    target.textContent = [
+      result.code,
+      ...result.lines
+    ].join("\n");
+    target.style.borderColor = result.valid ? "var(--success)" : "var(--error)";
+    return result;
+  }
+
+  function setupCommandPreflight() {
+    const input = $("#paletteCommandInput");
+    const button = $("#paletteValidateBtn");
+    const output = $("#palettePreflight");
+    if (!input || !button || !output) return;
+
+    button.addEventListener("click", () => renderPreflight(input.value, output));
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        renderPreflight(input.value, output);
+      }
+    });
+  }
+
+  function setupGitChain() {
+    const button = $("#gitChainBtn");
+    const result = $("#gitChainResult");
+    if (!button || !result) return;
+
+    button.addEventListener("click", () => {
+      if (state.runtime === "none") {
+        toast("Сначала явно выберите runtime");
+        return;
+      }
+      result.innerHTML = "<h2>VALID_CHAIN</h2><div class=\"codebox\">✓ GIT CHECK      PASS\n● GIT COMMIT     current\n○ GIT PUSH       pending\n○ GIT PR         pending</div><p>Chain зарегистрирован как одна execution sequence. Следующий segment определяется CTS.</p>";
     });
   }
 
@@ -234,11 +322,19 @@ skills:
       const q = input.value.toLowerCase();
       $$(".palette-item").forEach((item) => item.hidden = !item.textContent.toLowerCase().includes(q));
     });
-    $$(".palette-item").forEach((item) => item.addEventListener("click", () => {
+    $(".palette-item").forEach((item) => item.addEventListener("click", () => {
       const screen = item.dataset.goto;
-      if (screen) showScreen(screen);
-      if (item.dataset.command) toast("Demo command: " + item.dataset.command);
-      close();
+      if (screen) {
+        showScreen(screen);
+        close();
+        return;
+      }
+      if (item.dataset.command) {
+        const commandInput = $("#paletteCommandInput");
+        const preflight = $("#palettePreflight");
+        if (commandInput) commandInput.value = item.dataset.command;
+        if (preflight) renderPreflight(item.dataset.command, preflight);
+      }
     }));
     document.addEventListener("keydown", (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
@@ -255,7 +351,7 @@ skills:
       if (!button || button.disabled) return;
       const cmd = button.dataset.command;
       if (/STEP RUN|RUN STEP/.test(cmd)) return; // execution-run-demo.js handles this
-      toast("Demo command: " + cmd);
+      toast("Preflight PASS → demo dispatch: " + cmd);
     });
   }
 
@@ -277,6 +373,8 @@ skills:
   setupSettings();
   setupUpdateDemo();
   setupSkills();
+  setupCommandPreflight();
+  setupGitChain();
   setupPalette();
   setupGenericCommands();
 
