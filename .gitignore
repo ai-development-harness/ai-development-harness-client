@@ -25,6 +25,7 @@ Thumbs.db
 __pycache__/
 .venv/
 node_modules/
+.yarn/install-state.gz
 dist/
 build/
 coverage/
@@ -33,6 +34,8 @@ coverage/
 # Локальные данные Nx вычисляются из workspace и не являются исходным кодом.
 .nx/
 out-tsc/
+.generated/
+.test-output/
 test-output/
 tmp/
 

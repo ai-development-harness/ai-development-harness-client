@@ -7,7 +7,8 @@ export default defineConfig(() => ({
   cacheDir: '../../node_modules/.vite/apps/web',
   server: {
     port: 4200,
-    host: 'localhost',
+    // Docker публикует порт контейнера на host, поэтому Vite слушает все container interfaces.
+    host: '0.0.0.0',
   },
   preview: {
     port: 4300,
@@ -19,7 +20,7 @@ export default defineConfig(() => ({
   //  plugins: [],
   // },
   build: {
-    outDir: './dist',
+    outDir: '../../.generated/web',
     emptyOutDir: true,
     reportCompressedSize: true,
     commonjsOptions: {
@@ -34,7 +35,7 @@ export default defineConfig(() => ({
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {
-      reportsDirectory: './test-output/vitest/coverage',
+      reportsDirectory: '../../.test-output/web/vitest/coverage',
       provider: 'v8' as const,
     },
   },

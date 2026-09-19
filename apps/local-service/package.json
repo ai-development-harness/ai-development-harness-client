@@ -13,7 +13,7 @@
         "defaultConfiguration": "production",
         "options": {
           "platform": "node",
-          "outputPath": "apps/local-service/dist",
+          "outputPath": ".generated/local-service",
           "format": [
             "cjs"
           ],
@@ -49,8 +49,8 @@
         "cache": true,
         "executor": "@nx/js:prune-lockfile",
         "outputs": [
-          "{workspaceRoot}/apps/local-service/dist/package.json",
-          "{workspaceRoot}/apps/local-service/dist/package-lock.json"
+          "{workspaceRoot}/.generated/local-service/package.json",
+          "{workspaceRoot}/.generated/local-service/yarn.lock"
         ],
         "options": {
           "buildTarget": "build"
@@ -62,7 +62,7 @@
         ],
         "cache": true,
         "outputs": [
-          "{workspaceRoot}/apps/local-service/dist/workspace_modules"
+          "{workspaceRoot}/.generated/local-service/workspace_modules"
         ],
         "executor": "@nx/js:copy-workspace-modules",
         "options": {
@@ -97,6 +97,5 @@
         }
       }
     }
-  },
-  "dependencies": {}
+  }
 }

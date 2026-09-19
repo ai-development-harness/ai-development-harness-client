@@ -12,7 +12,7 @@
 | REQ-008 | Запланировано | STEP-013 | MVP |
 | REQ-009 | Запланировано | STEP-005, STEP-012, STEP-013 | MVP |
 | REQ-010 | Запланировано | STEP-007 | MVP |
-| REQ-011 | Запланировано | STEP-001, STEP-002 | MVP |
+| REQ-011 | Запланировано | STEP-001, STEP-002, STEP-016 | MVP |
 | REQ-012 | Запланировано | STEP-005, STEP-011 | MVP |
 | REQ-013 | Запланировано | STEP-006, STEP-011 | MVP |
 | REQ-014 | Запланировано | STEP-014 | Post-MVP |

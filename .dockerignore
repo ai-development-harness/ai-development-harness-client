@@ -1,0 +1,12 @@
+# Development image не получает source из build context: он монтируется только во время запуска.
+.git
+.env*
+.project/local
+.nx
+node_modules
+dist
+build
+coverage
+.yarn
+test-output
+tmp

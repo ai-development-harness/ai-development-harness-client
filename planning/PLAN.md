@@ -18,6 +18,7 @@
 | STEP-012 | Quality, skills, updates и settings surfaces | IMPLEMENTATION | Высокий | STEP-005, STEP-007, STEP-009 | Запланировано |
 | STEP-013 | Git Workspace и publication chains | IMPLEMENTATION | Высокий | STEP-005, STEP-007 | Запланировано |
 | STEP-014 | Post-MVP Activity и расширенные UX surfaces | IMPLEMENTATION | Средний | STEP-011, STEP-012, STEP-013 | Запланировано |
+| STEP-016 | Docker dev окружение и миграция на Yarn | IMPLEMENTATION | Высокий | STEP-001 | Выполнено |
 
 ## Architectural reserve
 
