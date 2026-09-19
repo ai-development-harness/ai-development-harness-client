@@ -703,6 +703,8 @@ Runtime/UI state:         connecting | streaming | waiting-for-input | disconnec
 - active execution переживает navigation;
 - после browser/runtime restart клиент использует `resolve-next-command.py --json`;
 - unresolved executions может быть несколько одновременно;
+- Harness Execution Status не хранит runtime identity; client может держать минимальную local-only binding `executionId → runtimeId/sessionId`;
+- если runtime binding после restart отсутствует, пользователь выбирает runtime явно; automatic fallback запрещён;
 - transport остаётся заменяемым за `ClientApi`;
 - после mutation client перечитывает repository и Git state;
 - Codex использует Codex App Server, Claude Code — Claude Agent SDK;
