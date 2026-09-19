@@ -20,4 +20,6 @@ ADR фиксирует **устойчивое архитектурное реш�
 
 ## Index
 
-`PROJECT INIT` заполняет этот раздел фактическими ADR.
+- [ADR-001 — Repository и Harness как источник истины](ADR-001-repository-i-harness-kak-istochnik-istiny.md)
+- [ADR-002 — ClientApi и заменяемая локальная граница](ADR-002-clientapi-i-zamenyaemaya-lokalnaya-granitsa.md)
+- [ADR-003 — Runtime adapters и явный выбор](ADR-003-runtime-adaptery-i-yavnyy-vybor.md)

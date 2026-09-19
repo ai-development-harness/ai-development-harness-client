@@ -7,7 +7,7 @@
 <!-- PROJECT-CONTEXT:START -->
 ## Project context
 
-Проект ещё не инициализирован. До успешного `PROJECT INIT` не создавай production-код и не придумывай product-specific архитектуру. Сырой вход находится в `PROJECT_BRIEF.local.md`.
+Проект инициализирован: **AI Development Harness Client**. Это локальный browser-first UI-клиент, который визуализирует repository-based Harness protocol и запускает его канонические команды, не создавая второй orchestration layer. Product context: `docs/PROJECT.md`; REQ: `docs/requirements/SPEC.md`; architecture: `docs/architecture.md`; roadmap: `planning/PLAN.md`.
 <!-- PROJECT-CONTEXT:END -->
 
 ## 2. Приоритет источников истины

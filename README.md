@@ -1,24 +1,11 @@
 <!-- PROJECT:START -->
-# AI Development Harness — новый проект
+# AI Development Harness Client
 
-Проект ещё не инициализирован.
+Локальный browser-first клиент для работы с AI Development Harness через графический интерфейс. Repository и Harness protocol остаются источником истины: клиент читает их проекции и запускает канонические команды через явно выбранный runtime.
 
-1. Создай локальный brief:
+Проект находится на стадии формирования MVP. Рекомендуемая следующая команда: `STEP NEXT`.
 
-   ```bash
-   cp PROJECT_BRIEF.example.md PROJECT_BRIEF.local.md
-   ```
-
-2. Опиши проект своими словами в `PROJECT_BRIEF.local.md`: цель, пользователей, сценарии, ограничения, предпочтительный стек, референсы и любые важные заметки.
-3. При необходимости скопируй `AGENTS.local.example.md` в `AGENTS.local.md` и добавь локальные команды/предпочтения.
-4. Открой репозиторий в Codex.
-5. Выполни:
-
-   ```text
-   INIT PROJECT
-   ```
-
-После успешной инициализации агент заменит **только этот блок** описанием конкретного проекта, ключевыми ссылками и текущей точкой входа в разработку.
+Подробнее: [проект](docs/PROJECT.md), [требования](docs/requirements/SPEC.md), [архитектура](docs/architecture.md), [roadmap](planning/PLAN.md).
 <!-- PROJECT:END -->
 
 ## Runtime adapters

@@ -1,16 +1,19 @@
-# Open Questions
+# Открытые вопросы
 
-Здесь находятся существенные вопросы, которые нельзя безопасно решить предположением.
+## OQ-001 — Первый production transport
 
-Формат:
+Нужно решить, будет ли первым production target только local Node.js service или также desktop/local bridge. Контракт `ClientApi` и replaceable transport уже обязателен; выбор конкретного bootstrap не нужен для INIT.
 
-```text
-OQ-001 — Краткий вопрос
-Status: OPEN | RESOLVED | DEFERRED
-Affects: REQ-..., STEP-..., ADR-...
-Context: ...
-Decision needed: ...
-Resolution: ...
-```
+**Handoff:** STEP-001 / STEP-002; при необходимости отдельный ADR STEP.
 
-`PROJECT INIT` должен предпочесть OPEN_QUESTION выдуманному архитектурному решению. Когда вопрос решён, зафиксируй результат в соответствующем REQ/ADR/STEP и обнови статус здесь.
+## OQ-002 — Runtime account identity в MVP
+
+Не определено, достаточно ли для MVP availability/authenticated/selected state или нужен показ account identity. Нельзя обещать поле, которое runtime adapter не может надёжно получить.
+
+**Handoff:** STEP-004.
+
+## OQ-003 — UI kit и component playground
+
+Не определён момент перехода от базовых semantic tokens к отдельному reusable UI kit/component playground. Это не блокирует доступный UI shell.
+
+**Handoff:** STEP-007.

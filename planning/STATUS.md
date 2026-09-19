@@ -1,27 +1,16 @@
-# Project Status
+# Статус roadmap
 
-> Projection текущего execution state. Обновляется из canonical task/evidence и requirements.
+## Сводка
 
-## Summary
+- Запланировано: 15
+- В работе: 0
+- Выполнено: 0
+- Заблокировано: 0
 
-Проект ещё не инициализирован.
+## Текущий critical path
 
-## In progress
+`STEP-001 → STEP-002 → STEP-004 → STEP-005 → STEP-006 → STEP-011`
 
-—
+## Следующее действие
 
-## Blocked
-
-—
-
-## Next unblocked work
-
-После INIT.
-
-## Recent completed
-
-—
-
-## Known drift / risks
-
-—
+`STEP PLAN STEP-001` — отсутствуют невыполненные зависимости.
