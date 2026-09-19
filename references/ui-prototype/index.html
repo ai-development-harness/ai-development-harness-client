@@ -3,28 +3,350 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
   <title>AI Development Harness — Full UI Prototype</title>
+  <link rel="stylesheet" href="assets/prototype.css">
 </head>
 <body>
-  <noscript>Для интерактивного прототипа требуется JavaScript.</noscript>
-  <script src="assets/payload-0.js"></script>
-  <script src="assets/payload-1.js"></script>
-  <script src="assets/payload-2.js"></script>
-  <script src="assets/payload-3.js"></script>
-  <script src="assets/payload-4.js"></script>
-  <script src="assets/payload-5.js"></script>
-  <script src="assets/payload-6.js"></script>
-  <script>
-  (async()=>{
-    const b64=window.__harnessPrototypeB64||'';
-    const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
-    if (!("DecompressionStream" in window)) throw new Error("Browser does not support DecompressionStream(gzip)");
-    const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
-    const html=await new Response(stream).text();
-    document.open(); document.write(html); document.close();
-  })().catch(err=>{
-    document.body.innerHTML=`<main style="font-family:system-ui;padding:32px"><h1>Prototype load failed</h1><pre>${String(err)}</pre></main>`;
-  });
-  </script>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div><strong>AI Development Harness</strong><small>Client prototype</small></div>
+      </div>
+
+      <div class="project-card">
+        <div class="eyebrow">Current project</div>
+        <strong data-project-name>ai-development-harness-client</strong>
+        <div class="path mono" data-project-path>~/projects/ai-development-harness-client</div>
+        <div class="row" style="margin-top:9px">
+          <span class="pill"><span class="dot success"></span><span data-project-status>Harness project · initialized</span></span>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-title">WORKSPACE</div>
+        <nav class="nav">
+          <button data-screen="open">Open Project</button>
+          <button class="active" data-screen="overview">Overview</button>
+          <button data-screen="project">Project / INIT</button>
+          <button data-screen="roadmap">Roadmap / STEP</button>
+          <button data-screen="step">STEP Detail</button>
+        </nav>
+      </div>
+      <div class="nav-group">
+        <div class="nav-title">KNOWLEDGE</div>
+        <nav class="nav">
+          <button data-screen="requirements">Requirements</button>
+          <button data-screen="adr">Architecture / ADR</button>
+          <button data-screen="knowledge">Project Files</button>
+        </nav>
+      </div>
+      <div class="nav-group">
+        <div class="nav-title">QUALITY</div>
+        <nav class="nav">
+          <button data-screen="reviews">Reviews & Findings <span class="badge pill">2</span></button>
+          <button data-screen="audits">Audits / Reconcile</button>
+          <button data-screen="releases">Releases</button>
+        </nav>
+      </div>
+      <div class="nav-group">
+        <div class="nav-title">TOOLS</div>
+        <nav class="nav">
+          <button data-screen="skills">Skills</button>
+          <button data-screen="git">Git Workspace</button>
+          <button data-screen="github">GitHub Collaboration</button>
+          <button data-screen="activity">Activity / Runs</button>
+        </nav>
+      </div>
+      <div class="nav-group">
+        <div class="nav-title">HARNESS</div>
+        <nav class="nav">
+          <button data-screen="agents">Agents & Models</button>
+          <button data-screen="updates">Harness Updates</button>
+          <button data-screen="settings">Policies & Settings</button>
+        </nav>
+      </div>
+      <div class="side-card">
+        <div class="eyebrow">Reference</div>
+        <p class="muted">UI визуализирует repository-based Harness protocol и не вводит собственную state machine.</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <strong id="currentSurface" style="font-size:12px">Overview</strong>
+        <div class="spacer"></div>
+        <label>Project
+          <select class="select" id="projectState">
+            <option value="initialized">client · initialized</option>
+            <option value="preinit">billing-service · pre-INIT</option>
+            <option value="invalid">ordinary repo · invalid</option>
+          </select>
+        </label>
+        <label>Runtime
+          <select class="select" id="runtimeSelect">
+            <option value="none">None</option>
+            <option value="codex">Codex</option>
+            <option value="claude-code">Claude Code</option>
+          </select>
+        </label>
+        <button class="btn" id="paletteBtn" type="button">⌘/Ctrl K · Commands</button>
+      </header>
+
+      <div class="content">
+        <section class="screen" data-screen="open">
+          <div class="page-head"><div class="grow"><div class="eyebrow">CLIENT LIFECYCLE</div><h1>Open Harness project</h1><p>Выберите локальный Git repository. Клиент различает initialized, valid pre-INIT и invalid/non-Harness состояния.</p></div></div>
+          <div class="grid three">
+            <article class="card"><div class="kpi">Initialized</div><h3>ai-development-harness-client</h3><p class="mono">~/projects/ai-development-harness-client</p><span class="pill"><span class="dot success"></span>valid</span><div class="row" style="margin-top:12px"><button class="btn primary" data-goto="overview">Открыть</button></div></article>
+            <article class="card"><div class="kpi">Pre-INIT</div><h3>billing-service</h3><p class="mono">~/projects/billing-service</p><span class="pill"><span class="dot warning"></span>project.initialized: false</span><div class="row" style="margin-top:12px"><button class="btn" type="button" onclick="document.querySelector('#projectState').value='preinit';document.querySelector('#projectState').dispatchEvent(new Event('change',{bubbles:true}));document.querySelector('[data-screen=project]').click()">Продолжить INIT</button></div></article>
+            <article class="card"><div class="kpi">Not Harness</div><h3>ordinary-repository</h3><p class="mono">~/projects/ordinary-repository</p><span class="pill"><span class="dot error"></span>Harness not found</span><p>Command actions недоступны. Можно выбрать другой repository.</p></article>
+          </div>
+        </section>
+
+        <section class="screen active" data-screen="overview">
+          <div class="page-head">
+            <div class="grow"><div class="eyebrow">PROJECT OVERVIEW</div><h1 data-project-name>ai-development-harness-client</h1><p>Сводка реального repository state: STEP, findings, Git, runtime, Harness release и рекомендация следующей работы.</p></div>
+            <div class="row"><span class="pill"><span class="dot success"></span>Harness v0.4.0</span><span class="pill">branch: <span data-project-branch>feat/refresh-interactive-prototype-v030</span></span></div>
+          </div>
+          <div class="banner warning" id="runtimeGate"><div><strong>Runtime не выбран</strong><p>Harness-команды заблокированы до явного выбора Codex или Claude Code. Никакого default/fallback runtime нет.</p></div></div>
+          <div class="banner" id="recoveryBanner">
+            <div style="flex:1">
+              <strong>Незавершённое выполнение обнаружено</strong>
+              <p><span class="mono">exec-017 · orchestration</span> · root <span class="mono">STEP RUN STEP-017</span> · resolver <strong>RESUME</strong> → <span class="mono">STEP IMPLEMENT STEP-017</span> · attempt 2.</p>
+              <div class="row"><button class="btn primary" type="button" data-command="STEP IMPLEMENT STEP-017" data-recovery-run>Продолжить execution</button><button class="btn ghost" type="button" data-command="STEP NEXT">STEP NEXT</button></div>
+            </div>
+          </div>
+          <div class="grid four">
+            <article class="card"><div class="kpi">STEP</div><div class="big">12</div><p>4 done · 1 in review · 7 planned</p></article>
+            <article class="card"><div class="kpi">Findings</div><div class="big">2</div><p>1 medium · 1 low</p></article>
+            <article class="card"><div class="kpi">Git</div><div class="big">+5</div><p>3 modified · 2 untracked</p></article>
+            <article class="card"><div class="kpi">Runtime</div><div class="big" style="font-size:18px" data-runtime-label>Не выбран</div><p>availability ≠ explicit selection</p></article>
+          </div>
+          <div class="grid two" style="margin-top:12px">
+            <article class="card">
+              <div class="eyebrow">STEP NEXT · recommendation after recovery</div>
+              <h2 style="margin-top:8px">STEP-017 · Runtime execution surface</h2>
+              <p>Если unresolved STEP executions нет, Harness рекомендует этот STEP. Это не global workflow lock. Других доступных STEP: 2.</p>
+              <div class="row"><button class="btn" data-goto="step">Открыть STEP</button><button class="btn primary" data-command="STEP RUN STEP-017" data-requires-runtime="true">STEP RUN STEP-017</button></div>
+            </article>
+            <article class="card"><h2>Repository state</h2><div class="codebox">REQ → STEP → implementation → evidence → review
+repository validity: PASS
+unresolved blockers: 0
+Harness update: not checked</div></article>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="project">
+          <div class="page-head"><div class="grow"><div class="eyebrow">PROJECT LIFECYCLE</div><h1>Project / INIT</h1><p>Полный pre-INIT flow проходит внутри клиента, но REQ/ADR/STEP создаёт Harness runtime, а не UI.</p></div></div>
+          <div id="invalidPanel" class="banner error" hidden><div><strong>Harness project не найден</strong><p>Выбран обычный Git repository. PROJECT INIT не предлагается, пока repository не станет valid pre-INIT Harness project.</p></div></div>
+          <div id="preInitPanel" hidden>
+            <div class="grid two">
+              <article class="card">
+                <div class="row"><div class="grow"><h2>PROJECT_BRIEF.local.md</h2><p>Локальный входной brief. Не коммитится и не становится внутренней БД клиента.</p></div><span class="pill"><span class="dot warning"></span>LOCAL ONLY</span></div>
+                <textarea class="textarea" id="briefEditor"># Project brief
+
+Нужен сервис биллинга с API, миграциями и review gates.
+
+## Ограничения
+- TypeScript
+- PostgreSQL
+- repository остаётся source of truth</textarea>
+                <div class="row" style="margin-top:10px"><button class="btn" id="saveBriefBtn">Сохранить brief</button><button class="btn ghost">Raw source</button></div>
+              </article>
+              <article class="card">
+                <div class="eyebrow">PROJECT INIT</div>
+                <h2 id="initStatus">project.initialized: false</h2>
+                <p>Runtime: <strong data-runtime-label>Не выбран</strong>. Без explicit runtime команда заблокирована.</p>
+                <div class="progress"><span id="initProgress"></span></div>
+                <pre class="codebox" id="initLog" style="margin-top:10px">Ожидание запуска...</pre>
+                <button class="btn primary" id="initProjectBtn" data-requires-runtime="true">PROJECT INIT</button>
+              </article>
+            </div>
+          </div>
+          <div id="initializedPanel">
+            <div class="banner success"><div><strong>project.initialized: true</strong><p>Обычный повторный INIT не предлагается. Для синхронизации product state используется PROJECT RECONCILE.</p></div></div>
+            <div class="grid three">
+              <article class="card"><div class="kpi">Requirements</div><div class="big">18</div><p>Созданы и читаются из repository.</p></article>
+              <article class="card"><div class="kpi">ADR</div><div class="big">7</div><p>Accepted architecture decisions.</p></article>
+              <article class="card"><div class="kpi">STEP</div><div class="big">12</div><p>Roadmap готов к выполнению.</p></article>
+            </div>
+            <div class="row" style="margin-top:12px"><button class="btn primary" data-command="PROJECT RECONCILE">PROJECT RECONCILE</button><button class="btn" data-goto="overview">Overview</button></div>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="roadmap">
+          <div class="page-head"><div class="grow"><div class="eyebrow">ROADMAP</div><h1>STEP</h1><p>Task contracts из repository. STEP NEXT — рекомендация, а не обязательный порядок исполнения.</p></div><input class="input" id="stepFilter" style="max-width:260px" placeholder="Фильтр STEP"></div>
+          <div class="table-wrap"><table><thead><tr><th>STEP</th><th>Status</th><th>Priority</th><th>Phase</th><th>Depends on</th><th>REQ</th></tr></thead><tbody id="roadmapRows">
+            <tr><td><strong>STEP-014</strong><br>Runtime adapters</td><td><span class="pill"><span class="dot success"></span>DONE</span></td><td>P0</td><td>Core</td><td>—</td><td>REQ-009, REQ-010</td></tr>
+            <tr><td><strong>STEP-017</strong><br>Live execution surface</td><td><span class="pill"><span class="dot warning"></span>PLANNED</span></td><td>P0</td><td>MVP</td><td>STEP-014</td><td>REQ-063…074</td></tr>
+            <tr><td><strong>STEP-018</strong><br>Git Workspace</td><td><span class="pill">READY</span></td><td>P1</td><td>MVP</td><td>STEP-014</td><td>REQ-035…037</td></tr>
+            <tr><td><strong>STEP-022</strong><br>Activity telemetry</td><td><span class="pill">POST-MVP</span></td><td>P2</td><td>Later</td><td>STEP-017</td><td>REQ-049…055</td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section class="screen" data-screen="step" data-tab-root>
+          <div class="page-head">
+            <div class="grow"><div class="eyebrow">STEP DETAIL</div><h1>STEP-017 · Live execution surface</h1><p>Выполнение Harness-команды без превращения UI в альтернативный orchestration engine.</p></div>
+            <div class="row"><button class="btn" data-command="STEP PLAN STEP-017">PLAN</button><button class="btn" data-command="STEP IMPLEMENT STEP-017">IMPLEMENT</button><button class="btn" data-command="STEP REVIEW STEP-017">REVIEW</button><button class="btn primary" data-command="STEP RUN STEP-017">STEP RUN STEP-017</button></div>
+          </div>
+          <div class="tabs" data-tabs><button class="active" data-tab="contract">Contract</button><button data-tab="plan">Plan</button><button data-tab="evidence">Evidence</button><button data-tab="review">Review</button><button data-tab="history">History</button><button data-tab="raw">Raw source</button></div>
+          <div class="tab-pane active" data-pane="contract"><div class="grid two"><article class="card"><h2>Goal</h2><p>Показать incremental output, structured events, input/approval и final repository refresh.</p><h2>Out of scope</h2><p>Activity history, analytics, собственная state machine Harness.</p></article><article class="card"><h2>Acceptance</h2><p>Run переживает UI navigation; text output не становится protocol state; interactive requests продолжают тот же runtime session.</p></article></div></div>
+          <div class="tab-pane" data-pane="plan">
+            <div class="grid two">
+              <article class="card"><h2>Plan state</h2><div class="grid two"><div><div class="kpi">Status</div><strong>Ready</strong></div><div><div class="kpi">Revision</div><strong>3</strong></div><div><div class="kpi">Basis</div><span class="pill"><span class="dot success"></span>current</span></div><div><div class="kpi">Planned at</div><span class="mono">2026-09-19T09:40:00Z</span></div></div><p>При изменении STEP contract status становится stale и UI предлагает точную команду <code>STEP PLAN STEP-017</code>.</p></article>
+              <article class="card"><h2>Canonical CTS child flow</h2><div class="flow" style="grid-template-columns:repeat(4,minmax(100px,1fr))"><div class="flow-step done"><strong>STEP PLAN</strong><small>SUCCESS</small></div><div class="flow-step active"><strong>STEP IMPLEMENT</strong><small>running</small></div><div class="flow-step"><strong>STEP REVIEW</strong><small>pending</small></div><div class="flow-step"><strong>STEP FIX</strong><small>conditional on FAIL</small></div></div><p>Verification и finalization не являются отдельными canonical commands.</p></article>
+            </div>
+          </div>
+          <div class="tab-pane" data-pane="evidence"><article class="card"><h2>Evidence</h2><p>Появится после implementation/verification. Источник — repository artifacts, не Activity cache.</p></article></div>
+          <div class="tab-pane" data-pane="review"><article class="card"><h2>Independent review</h2><p>Mandatory. Specialized security/tests reviewers зависят от policy.</p></article></div>
+          <div class="tab-pane" data-pane="history"><article class="card"><h2>Repository history</h2><p>MVP может строить эту вкладку из durable STEP/review/evidence artifacts без отдельного telemetry store.</p></article></div>
+          <div class="tab-pane" data-pane="raw"><pre class="codebox"># STEP-017
+Status: PLANNED
+Priority: P0
+Requirements:
+- CLIENT-REQ-063
+- CLIENT-REQ-064
+- CLIENT-REQ-065
+...</pre></div>
+        </section>
+
+        <section class="screen" data-screen="requirements">
+          <div class="page-head"><div class="grow"><div class="eyebrow">REQUIREMENTS</div><h1>Product requirements</h1><p>Structured read view поверх repository Markdown. Raw source остаётся доступен.</p></div></div>
+          <div class="table-wrap"><table><thead><tr><th>ID</th><th>Requirement</th><th>Stage</th><th>Traceability</th></tr></thead><tbody>
+            <tr><td>CLIENT-REQ-063</td><td>Live execution surface</td><td>MVP</td><td>STEP-017</td></tr>
+            <tr><td>CLIENT-REQ-068</td><td>Interactive run</td><td>MVP</td><td>STEP-017</td></tr>
+            <tr><td>CLIENT-REQ-071</td><td>Official runtime integration surface</td><td>MVP</td><td>ADR pending</td></tr><tr><td>CLIENT-REQ-072</td><td>Deterministic command preflight / CTS</td><td>MVP</td><td>STEP-017</td></tr><tr><td>CLIENT-REQ-073</td><td>Explicit chain execution</td><td>MVP</td><td>STEP-017 / Git</td></tr><tr><td>CLIENT-REQ-074</td><td>Restart-safe Execution Status</td><td>MVP</td><td>STEP-017</td></tr>
+            <tr><td>CLIENT-REQ-049</td><td>Activity client-owned</td><td>Post-MVP</td><td>STEP-022</td></tr>
+          </tbody></table></div>
+        </section>
+
+        <section class="screen" data-screen="adr">
+          <div class="page-head"><div class="grow"><div class="eyebrow">ARCHITECTURE</div><h1>ADR</h1><p>Почему система устроена именно так. Accepted ADR имеют больший приоритет, чем визуальный prototype.</p></div></div>
+          <div class="grid three">
+            <article class="card"><div class="kpi">Accepted</div><h3>ADR-006 · ClientApi boundary</h3><p>React UI не зависит напрямую от filesystem/process execution.</p></article>
+            <article class="card"><div class="kpi">Proposed</div><h3>ADR-009 · Runtime integration</h3><p>Codex App Server и Claude Agent SDK как first-class programmatic surfaces.</p></article>
+            <article class="card"><div class="kpi">Accepted</div><h3>ADR-004 · Repository source of truth</h3><p>Client cache не конкурирует с REQ/ADR/STEP/evidence.</p></article>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="knowledge">
+          <div class="page-head"><div class="grow"><div class="eyebrow">KNOWLEDGE</div><h1>Project files</h1><p>Просмотр canonical artifacts и raw-source fallback.</p></div></div>
+          <div class="grid two"><article class="card"><h2>Repository tree</h2><pre class="codebox">AGENTS.md
+CLAUDE.md
+.project/
+docs/
+  requirements/
+  adr/
+planning/
+  tasks/
+  reviews/
+.agents/
+.codex/
+.claude/</pre></article><article class="card"><h2>Selected source</h2><pre class="codebox">docs/requirements/SPEC.md
+
+Repository остаётся source of truth.
+UI не реализует второй orchestration...</pre></article></div>
+        </section>
+
+        <section class="screen" data-screen="reviews">
+          <div class="page-head"><div class="grow"><div class="eyebrow">QUALITY</div><h1>Reviews & Findings</h1><p>Immutable review reports, findings и specialized reviews.</p></div></div>
+          <div class="grid two"><article class="card finding high"><div class="kpi">MEDIUM</div><h3>Execution reconnect race</h3><p>При page reload подписка может потерять события между snapshot и reconnect.</p><p class="mono">src/run-store.ts:84</p></article><article class="card finding low"><div class="kpi">LOW</div><h3>Missing reduced-motion state</h3><p>Streaming indicator должен уважать prefers-reduced-motion.</p></article></div>
+        </section>
+
+        <section class="screen" data-screen="audits">
+          <div class="page-head"><div class="grow"><div class="eyebrow">AUDIT / RECONCILE</div><h1>Проверки проекта</h1><p>AUDIT bounded по конкретному STEP, RECONCILE — project-wide. Эти действия не объединяются.</p></div></div>
+          <div class="grid two"><article class="card"><h2>STEP AUDIT STEP-017</h2><p>Проверка реализации против task contract без mutation production code.</p><button class="btn" data-command="STEP AUDIT STEP-017">STEP AUDIT STEP-017</button></article><article class="card"><h2>PROJECT RECONCILE</h2><p>Сверка code/config/tests с REQ, ADR, architecture docs, STEP, evidence и projections.</p><button class="btn primary" data-command="PROJECT RECONCILE">PROJECT RECONCILE</button></article></div>
+        </section>
+
+        <section class="screen" data-screen="releases">
+          <div class="page-head"><div class="grow"><div class="eyebrow">RELEASES</div><h1>Release readiness</h1><p>RELEASE CHECK создаёт durable report и blockers; отдельная release-management subsystem для MVP не нужна.</p></div><button class="btn primary" data-command="RELEASE CHECK">RELEASE CHECK</button></div>
+          <article class="card"><h2>Latest report</h2><div class="grid three"><div><div class="kpi">Validation</div><div class="big" style="color:var(--success)">PASS</div></div><div><div class="kpi">Reviews</div><div class="big" style="color:var(--success)">PASS</div></div><div><div class="kpi">Blockers</div><div class="big">0</div></div></div></article>
+        </section>
+
+        <section class="screen" data-screen="skills">
+          <div class="page-head"><div class="grow"><div class="eyebrow">SKILLS</div><h1>Find / inspect / install</h1><p>Поиск и установка разделены. Third-party skill рассматривается как внешняя dependency.</p></div></div>
+          <div class="grid two"><article class="card"><h2>SKILL FIND:</h2><input class="input" value="React accessibility review"><div class="row" style="margin-top:10px"><button class="btn primary" id="findSkillBtn" data-command="SKILL FIND: React accessibility review">SKILL FIND</button><span class="pill">maxResults: 5</span></div></article><article class="card" id="skillCandidates" hidden><h2>Candidate #1</h2><p><strong>a11y-review</strong></p><p>source: github.com/example/a11y-skills<br>ref: 8ca91b2 · license: MIT</p><div class="row"><button class="btn">Inspect</button><button class="btn primary" data-command="SKILL INSTALL: #1">SKILL INSTALL</button></div></article></div>
+        </section>
+
+        <section class="screen" data-screen="git">
+          <div class="page-head"><div class="grow"><div class="eyebrow">GIT WORKSPACE</div><h1>Git state</h1><p>Без force push, automatic merge и automatic rebase shortcuts.</p></div></div>
+          <div class="grid four"><article class="card"><div class="kpi">Branch</div><h3 data-project-branch>feat/refresh-interactive-prototype-v030</h3><p>upstream origin</p></article><article class="card"><div class="kpi">Working tree</div><div class="big">5</div><p>3 modified · 2 untracked</p></article><article class="card"><div class="kpi">Ahead / behind</div><div class="big">2 / 0</div></article><article class="card"><div class="kpi">Harness validation</div><div class="big" style="color:var(--success)">PASS</div></article></div>
+          <div class="row" style="margin-top:12px"><button class="btn primary" data-command="GIT CHECK">GIT CHECK</button><button class="btn" data-command="GIT COMMIT">GIT COMMIT</button><button class="btn" data-command="GIT PUSH">GIT PUSH</button><button class="btn" data-command="GIT PR">GIT PR</button><button class="btn" data-command="GIT SYNC">GIT SYNC</button></div>
+          <div class="grid two" style="margin-top:12px">
+            <article class="card"><div class="eyebrow">CTS CHAIN</div><h2>Publication pipeline</h2><div class="codebox">GIT CHECK &gt; COMMIT &gt; PUSH &gt; PR</div><p>Вся цепочка проходит structural validation до первого segment.</p><button class="btn primary" id="gitChainBtn" type="button">Validate & run chain</button></article>
+            <article class="card" id="gitChainResult"><h2>Preflight</h2><p class="muted">Нажмите Validate & run chain.</p></article>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="github">
+          <div class="page-head"><div class="grow"><div class="eyebrow">POST-MVP SURFACE</div><h1>GitHub Collaboration</h1><p>Отдельный экран не blocker MVP, хотя PR command уже должен работать в Git Workspace.</p></div></div>
+          <div class="grid two"><article class="card"><h2>Pull request #5</h2><p>feat(ui): обновить интерактивный прототип</p><span class="pill"><span class="dot warning"></span>Checks running</span></article><article class="card"><h2>Templates</h2><p>Issue / PR templates генерируются отдельной Harness-командой.</p><button class="btn" data-command="GITHUB GENERATE TEMPLATES">GITHUB GENERATE TEMPLATES</button></article></div>
+        </section>
+
+        <section class="screen" data-screen="activity">
+          <div class="page-head"><div class="grow"><div class="eyebrow">POST-MVP · CLIENT-OWNED</div><h1>Activity / Runs</h1><p>История и analytics не являются canonical Harness state. Это отдельный слой observability.</p></div></div>
+          <div class="banner"><div><strong>Не путать с Harness Execution Status</strong><p><code>.project/local/execution/execution-status.json</code> — operational recovery state MVP. Activity JSONL — отдельная Post-MVP observability/analytics projection.</p></div></div>
+          <div class="table-wrap"><table><thead><tr><th>Time</th><th>Command</th><th>Runtime</th><th>Model</th><th>Result</th></tr></thead><tbody><tr><td>09:18</td><td>STEP RUN STEP-014</td><td>Claude Code</td><td>Sonnet</td><td>PASS</td></tr><tr><td>08:42</td><td>GIT CHECK</td><td>Codex</td><td>GPT-5.6 Sol</td><td>PASS</td></tr></tbody></table></div>
+        </section>
+
+        <section class="screen" data-screen="agents">
+          <div class="page-head"><div class="grow"><div class="eyebrow">RUNTIME CONFIGURATION</div><h1>Agents & Models</h1><p>Harness roles отделены от model/effort/permissions конкретного runtime adapter.</p></div></div>
+          <div class="grid two"><article class="card"><h2>Codex</h2><pre class="codebox">.codex/config.toml
+.codex/agents/
+  planner.toml
+  implementer.toml
+  reviewer.toml</pre><p>Programmatic surface: <strong>Codex App Server</strong></p></article><article class="card"><h2>Claude Code</h2><pre class="codebox">CLAUDE.md
+.claude/settings.json
+.claude/agents/
+  planner.md
+  implementer.md
+  reviewer.md</pre><p>Programmatic surface: <strong>Claude Agent SDK</strong></p></article></div>
+        </section>
+
+        <section class="screen" data-screen="updates">
+          <div class="page-head"><div class="grow"><div class="eyebrow">HARNESS UPDATES</div><h1>Check / Apply</h1><p><code>HARNESS UPDATE APPLY</code> может reuse только matching CHECK из общего Execution Status.</p></div></div>
+          <div class="grid two"><article class="card"><h2>Current release</h2><div class="big">v0.4.0</div><p>Target: latest</p><div class="row"><button class="btn primary" id="checkUpdateBtn">HARNESS UPDATE CHECK</button><button class="btn" id="applyUpdateBtn" disabled>HARNESS UPDATE APPLY</button></div></article><article class="card" id="updateResult" hidden></article></div>
+        </section>
+
+        <section class="screen" data-screen="settings">
+          <div class="page-head"><div class="grow"><div class="eyebrow">POLICIES & SETTINGS</div><h1>Только реальные настройки</h1><p>Protocol invariants не превращаются в toggles.</p></div></div>
+          <div class="grid two">
+            <article class="card"><h2>.project/manifest.yaml</h2>
+              <label>maxFixReviewCycles: <strong id="maxCyclesValue">3</strong><input style="width:100%" id="maxCycles" type="range" min="1" max="5" value="3"></label>
+              <label style="display:block;margin-top:12px">review.security<select class="select" id="securityReview"><option>auto</option><option>always</option></select></label>
+              <label style="display:block;margin-top:12px">review.tests<select class="select" id="testsReview"><option>auto</option><option>always</option></select></label>
+              <label style="display:block;margin-top:12px">skills.search.maxResults<select class="select" id="skillResults"><option>3</option><option selected>5</option><option>7</option><option>10</option></select></label>
+            </article>
+            <article class="card"><h2>Preview</h2><pre class="codebox" id="manifestPreview"></pre><h2 style="margin-top:14px">Не конфигурируется</h2><p>mandatory independent review · automatic merge/rebase · force push · PROJECT QUICK FIX safety boundary</p></article>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="palette-backdrop" id="paletteBackdrop">
+    <div class="palette" role="dialog" aria-modal="true" aria-label="Command Palette">
+      <div class="palette-head">
+        <div class="eyebrow" style="margin-bottom:7px">Canonical command / chain</div>
+        <div class="row"><input class="input" id="paletteCommandInput" value="GIT CHECK > COMMIT > PUSH > PR" style="flex:1"><button class="btn primary" id="paletteValidateBtn" type="button">Validate</button></div>
+        <pre class="codebox" id="palettePreflight" style="margin:9px 0 0">Ожидание deterministic preflight...</pre>
+        <input class="input" id="paletteSearch" placeholder="Фильтр экранов и примеров..." style="margin-top:9px">
+      </div>
+      <div class="palette-list">
+        <button class="palette-item" data-goto="overview"><span>Overview</span><small>screen</small></button>
+        <button class="palette-item" data-goto="step"><span>STEP Detail</span><small>screen</small></button>
+        <button class="palette-item" data-command="STEP RUN STEP-017"><code>STEP RUN STEP-017</code><small>orchestration</small></button><button class="palette-item" data-command="STEP REVIEW STEP-017 > FIX > REVIEW"><code>STEP REVIEW STEP-017 &gt; FIX &gt; REVIEW</code><small>conditional chain</small></button><button class="palette-item" data-command="GIT CHECK > COMMIT > PUSH > PR"><code>GIT CHECK &gt; COMMIT &gt; PUSH &gt; PR</code><small>chain</small></button>
+        <button class="palette-item" data-command="PROJECT RECONCILE"><code>PROJECT RECONCILE</code><small>standalone</small></button>
+        <button class="palette-item" data-goto="git"><span>Git Workspace</span><small>screen</small></button>
+        <button class="palette-item" data-goto="updates"><span>Harness Updates</span><small>screen</small></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="assets/prototype.js"></script>
+  <script src="assets/execution-run-demo.js"></script>
 </body>
 </html>

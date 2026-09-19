@@ -1,101 +1,115 @@
-# AI Development Harness — Full UI Prototype
+# AI Development Harness — Interactive UI Prototype
 
 Откройте `index.html` в браузере. Внешних зависимостей нет.
 
-Это интерактивный UX-прототип клиента AI Development Harness, а не альтернативная реализация Harness.
+Prototype хранится как обычные читаемые HTML/CSS/JS файлы. Он **не использует gzip/base64 payload, `DecompressionStream` или runtime reconstruction HTML**.
 
-## Что обновлено под текущую архитектуру
+Это UX/UI reference **целевого клиента** AI Development Harness, а не отдельная реализация Harness protocol. Прототип может показывать Post-MVP surfaces; обязательный scope первой версии фиксирует `REQUIREMENTS.md`.
 
-Прототип теперь начинается с реального lifecycle клиента:
+## Baseline
 
-1. npm-пакет предоставляет executable `harness-ui`.
-2. Клиент может запускаться как `harness-ui`, `harness-ui .`, `harness-ui /path/to/project` или `harness-ui --project /path/to/project`.
-3. Если project path не задан однозначно, пользователь выбирает локальный Harness repository.
-4. Клиент детерминированно валидирует project context.
-5. Выбранный repository становится `current project`.
-6. Read-only/project views читают состояние из repository / Git projection layer.
-7. Любая Harness command передаётся **явно выбранному runtime adapter** с `projectRoot` выбранного repository и explicit `runtimeId`.
-8. Запущенный run сохраняет immutable snapshot `projectRoot + runtimeId`, даже если UI позже переключён на другой проект или runtime.
+Reference синхронизирован с публичным Harness **v0.4.0** и визуальным языком текущего сайта AI Development Harness.
 
-Без валидного current project Harness-команды заблокированы.
+Ключевые возможности Harness v0.4.0, отражённые в интерфейсе:
 
-### Demo preview mode
+- canonical namespaced command interface;
+- deterministic CTS preflight через `validate-command.py`;
+- explicit same-domain chains;
+- universal `.project/local/execution/execution-status.json`;
+- restart-safe resolver `RESUME | NEXT | DONE | BLOCKED | NOT_FOUND`;
+- `STEP NEXT` с recovery незавершённых STEP executions;
+- `STEP RUN STEP-NNN` как root orchestration;
+- Plan status / revision / basis / planned-at;
+- `execution.maxFixReviewCycles` — 1..5;
+- `review.security` — `auto | always`;
+- `review.tests` — `auto | always`;
+- `skills.search.maxResults` — 1..10.
 
-Это интерактивный UX-макет, поэтому **все разделы интерфейса доступны для навигации даже без выбранного repository**. В этом состоянии отображаются демонстрационные данные и баннер `DEMO PREVIEW`.
+Protocol invariants не превращаются в toggles: mandatory independent review, PROJECT QUICK FIX safety boundary и запрет automatic merge/rebase остаются фиксированными правилами.
 
-Ограничение «без project context нельзя выполнять Harness command» относится только к command actions, а не к просмотру экранов прототипа.
+## Структура reference
 
-## В прототипе есть
+```text
+references/ui-prototype/
+├── index.html
+└── assets/
+    ├── prototype.css
+    ├── prototype.js
+    └── execution-run-demo.js
+```
 
-- стартовый `Open Harness project`;
-- recent projects;
-- validation states: valid / pre-INIT / not Harness;
-- project switcher;
-- explicit current repository path/branch;
-- Command Palette (`Ctrl/Cmd + K`) с блокировкой команд без project context;
-- immutable project context в run drawer;
-- Overview;
-- Project / INIT;
+Это намеренно обычный статический browser prototype: файлы можно читать и ревьюить напрямую в Git diff.
+
+## Что есть в прототипе
+
+- Open Project + validation states;
+- Overview + корректная семантика `STEP NEXT` как рекомендации;
+- Project / INIT, включая pre-INIT сценарий `PROJECT_BRIEF.local.md → PROJECT INIT → repository refresh`;
+- deterministic command preflight / normalized chains;
+- unresolved execution recovery через Harness Execution Status;
 - Roadmap / STEP;
+- STEP Detail с Contract / Plan / Evidence / Review / History;
 - Requirements;
 - Architecture / ADR;
-- Reviews;
+- Reviews & findings;
 - Audits / Reconcile;
 - Releases;
 - Skills;
 - Git workspace;
 - GitHub collaboration;
 - Knowledge / raw source;
-- Activity / Runs;
+- Activity / Runs как client-owned projection;
 - Agents & Models;
-- Policies & Settings.
+- Harness Updates;
+- Policies & Settings;
+- Command Palette (`Ctrl/Cmd + K`);
+- explicit Runtime switcher `Codex / Claude Code / None`;
+- dark/light theme.
 
-См. `COVERAGE.md` для карты функционального покрытия.
+## Визуальное направление
 
+Prototype использует semantic tokens сайта:
 
-## Синхронизация с актуальным Harness main
+- dark navy background;
+- cyan → blue → violet accent;
+- тонкие blue borders;
+- grid background;
+- translucent cards;
+- радиусы 12 / 18 / 26 px;
+- тот же mark/logo language;
+- светлая тема строится на тех же semantic tokens.
 
-Reference обновлён по текущему `ai-development-harness-template/main`:
+## Interaction notes
 
-- локальные repository-wide preferences/aliases: `AGENTS.local.md`;
-- Harness protocol version `1`, release `0.2.2`;
-- maintenance commands `CHECK HARNESS UPDATE` и `UPDATE HARNESS`;
-- `.project/harness-update.toml`, `.project/harness.lock.json`, `planning/harness-updates/`;
-- core skill `update-harness`;
-- agent role `harness_updater`;
-- validator остаётся `tools/harness/validate.py`.
+Это демонстрационный prototype:
 
-## UX additions
+- команды не запускают реальные runtime adapters;
+- кнопки Harness command показывают preview / toast;
+- `STEP RUN STEP-NNN` открывает интерактивный **Execution Run** с `executionId`, mode, root/current command и immutable `projectRoot + runtimeId`;
+- Execution Run является projection над Harness Execution Status + runtime stream, а не отдельной state machine;
+- demo различает Harness execution status, command result и runtime/UI state;
+- в ходе demo runtime переходит в `waiting-for-input`, принимает structured clarification, продолжает тот же run, затем показывает native-style permission request;
+- разрешение/отклонение влияет на продолжение run; успешный путь заканчивается deterministic verification, independent review и repository refresh;
+- панель можно закрыть во время выполнения и открыть снова — demo run продолжает жить отдельно от текущего UI surface;
+- Settings интерактивно обновляет manifest preview, RUN policy и Skills shortlist;
+- Harness Updates демонстрирует `HARNESS UPDATE CHECK` / `HARNESS UPDATE APPLY` и matching-check handoff;
+- Git Workspace показывает explicit chain `GIT CHECK > COMMIT > PUSH > PR`;
+- Overview показывает recovery-state для interrupted STEP execution;
+- таблица Roadmap фильтруется;
+- STEP tabs переключаются;
+- Command Palette работает с клавиатуры;
+- при runtime=`None` command actions показывают blocker.
 
-- глобальный быстрый переключатель UI locale (`ru`, `en`, `de` в прототипе);
-- все blocked controls показывают причину блокировки и способ разблокировать при hover/focus;
-- фильтры таблиц работают;
-- фильтруемые списки/таблицы имеют объясняющее empty state;
-- `UPDATE HARNESS` блокируется до успешного `CHECK HARNESS UPDATE`.
+## Источники истины
 
+При расхождении:
 
-## Codex + Claude Code
+```text
+Harness protocol / requirements / Accepted ADR
+    > interactive prototype
+    > visual experiments
+```
 
-Актуальный Harness поддерживает два first-class runtime adapter:
-
-- **Codex** — `.codex/config.toml`, `.codex/agents/*.toml`;
-- **Claude Code** — `CLAUDE.md`, `.claude/settings.json`, `.claude/agents/*.md`.
-
-`CLAUDE.md` импортирует `@AGENTS.md`, поэтому канонический repository contract остаётся единым.
-
-В `harness-ui` active runtime **не имеет значения по умолчанию**:
-
-1. пользователь открывает Harness repository;
-2. явно выбирает `Codex` или `Claude Code` в глобальном Runtime switcher;
-3. только после этого Harness commands становятся исполнимыми.
-
-Project switch сбрасывает runtime selection. Уже запущенный run хранит immutable snapshot `projectRoot + runtimeId`.
-
-Наличие обоих adapter в repository или наличие установленного executable на host **не является согласием пользователя на выбор runtime**. Автоматический fallback с одного runtime на другой запрещён.
-
-
-## Harness main baseline
-
-Последняя сверка этого reference-комплекта выполнена с `ai-development-harness/ai-development-harness-template/main`.
-
-На момент сверки manifest содержит `harness.version = "1"` и `harness.release = "0.2.2"`. Integrity policy требует оба adapter layer: `CLAUDE.md` / `.claude/*` для Claude Code и `.codex/*` для Codex.
+Продуктовый brief: [`BRIEF.md`](BRIEF.md).
+Требования и scope MVP: [`REQUIREMENTS.md`](REQUIREMENTS.md).
+Функциональное покрытие: [`COVERAGE.md`](COVERAGE.md).
