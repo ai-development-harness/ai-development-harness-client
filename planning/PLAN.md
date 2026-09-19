@@ -23,7 +23,7 @@
 | STEP-018 | Containment boundary repository projection | ADR | Критический | STEP-001, STEP-017 | Заменено |
 | STEP-019 | Crash-consistent containment lifecycle | ADR | Критический | STEP-001, STEP-017, STEP-020, STEP-022 | Заблокировано |
 | STEP-020 | Linux supported containment profile research | RESEARCH | Критический | STEP-001, STEP-017 | Выполнено |
-| STEP-021 | Typed fail-closed enforcement repository projection | BUGFIX | Критический | STEP-001, STEP-017 | Запланировано |
+| STEP-021 | Typed fail-closed enforcement repository projection | BUGFIX | Критический | STEP-001, STEP-017 | Выполнено |
 | STEP-022 | Решение о Linux containment primitive | ADR | Критический | STEP-020, STEP-021 | Запланировано |
 
 ## Architectural reserve

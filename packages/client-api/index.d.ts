@@ -1,7 +1,7 @@
 export type RepositoryValidity = 'initialized' | 'pre-init' | 'invalid';
 
 export interface ProjectionError {
-  code: 'INVALID_REPOSITORY' | 'IO_ERROR' | 'GIT_UNAVAILABLE' | 'RESOURCE_LIMIT';
+  code: 'INVALID_REPOSITORY' | 'IO_ERROR' | 'GIT_UNAVAILABLE' | 'RESOURCE_LIMIT' | 'PLATFORM_UNSUPPORTED';
   message: string;
 }
 

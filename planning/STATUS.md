@@ -2,9 +2,9 @@
 
 ## Сводка
 
-- Запланировано: 15
+- Запланировано: 14
 - В работе: 0
-- Выполнено: 4
+- Выполнено: 5
 - Заблокировано: 2
 - Заменено: 1
 
@@ -14,4 +14,4 @@
 
 ## Следующее действие
 
-`STEP PLAN STEP-021` — спланировать typed fail-closed correction current runtime drift. STEP-019 и STEP-002 остаются заблокированными до reviewed STEP-021 и completed supported-primitive decision STEP-022.
+`STEP PLAN STEP-022` — спланировать решение о supported containment primitive для Linux. STEP-019 и STEP-002 остаются заблокированными до reviewed supported-primitive decision STEP-022.
