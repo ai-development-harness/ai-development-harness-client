@@ -122,7 +122,7 @@
     const bar = $("#initProgress");
     const log = $("#initLog");
     bar.style.width = "14%";
-    log.textContent = "PROJECT INIT · runtime=" + state.runtime + "\nПроверяю PROJECT_BRIEF.local.md...";
+    log.textContent = "PROJECT INIT · preflight=VALID_COMMAND · runtime=" + state.runtime + "\nПроверяю PROJECT_BRIEF.local.md...";
     setTimeout(() => {
       bar.style.width = "43%";
       log.textContent += "\nСоздаю PROJECT / REQ / ADR / STEP через Harness...";
