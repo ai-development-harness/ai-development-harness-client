@@ -187,7 +187,7 @@
     } else {
       line("execution.started · mode=orchestration · root=STEP RUN STEP-017", "event");
       line("STEP PLAN STEP-017 уже завершён: SUCCESS", "ok");
-      line("CTS → NEXT STEP IMPLEMENT STEP-017", "event");
+      line("CTS → NEXT: STEP IMPLEMENT STEP-017", "event");
     }
 
     later(700, function () {
@@ -244,7 +244,7 @@
         resolver: "NEXT · ORCHESTRATION_CTS_TRANSITION"
       });
       line("STEP IMPLEMENT STEP-017 complete · SUCCESS", "ok");
-      line("CTS → NEXT STEP REVIEW STEP-017", "event");
+      line("CTS → NEXT: STEP REVIEW STEP-017", "event");
     });
     later(2200, function () {
       line("Independent reviewer: verdict PASS", "ok");
