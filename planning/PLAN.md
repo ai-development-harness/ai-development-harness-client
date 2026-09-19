@@ -4,7 +4,7 @@
 
 | STEP | Название | Type | Приоритет | Depends on | Статус |
 | --- | --- | --- | --- | --- | --- |
-| STEP-001 | Bootstrap Nx workspace и границ приложения | IMPLEMENTATION | Критический | — | Запланировано |
+| STEP-001 | Bootstrap Nx workspace и границ приложения | IMPLEMENTATION | Критический | — | Выполнено |
 | STEP-002 | ClientApi и repository projections | IMPLEMENTATION | Критический | STEP-001 | Запланировано |
 | STEP-003 | Открытие и валидация repository | IMPLEMENTATION | Критический | STEP-002 | Запланировано |
 | STEP-004 | Runtime adapters и explicit selection | IMPLEMENTATION | Критический | STEP-002 | Запланировано |
@@ -25,4 +25,4 @@
 | --- | --- | --- | --- | --- | --- |
 | STEP-015 | Secure local bridge research и ADR | RESEARCH | Средний | STEP-002 | Запланировано |
 
-Порядок определён dependencies. Первое исполнимое действие: `STEP PLAN STEP-001`.
+Порядок определён dependencies. Первое исполнимое действие: `STEP PLAN STEP-002`.
