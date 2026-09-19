@@ -1,13 +1,10 @@
-# Глоссарий проекта
+# Глоссарий продукта
 
-Этот файл предназначен для **доменных и продуктовых терминов конкретного проекта** и заполняется/обновляется после `PROJECT INIT`.
+- **ClientApi** — граница между React UI и transport/application service.
+- **Runtime adapter** — адаптер Codex или Claude Code, приводящий программный runtime surface к общему client contract.
+- **Repository projection** — read model, полученная из реальных файлов, Git и deterministic Harness output.
+- **Execution Run** — UI projection над Harness Execution Status, runtime event stream и repository projections.
+- **Activity / Runs** — будущая client-owned observability/analytics возможность; не заменяет Execution Status.
+- **Explicit runtime selection** — обязательный явный выбор runtime без automatic fallback.
 
-Термины самого AI Development Harness (`REQ`, `ADR`, `STEP`, `Evidence`, `Projection`, `Drift`, `Gate` и т. п.) определены отдельно:
-
-- [`harness/GLOSSARY.md`](harness/GLOSSARY.md)
-
-Добавляй сюда термин только если его единое значение важно для требований, архитектуры, UX или реализации конкретного продукта.
-
-| Термин | Определение | Связанные REQ/ADR | Примечание |
-|---|---|---|---|
-| TBD | TBD | — | Заполняется во время INIT/разработки |
+Термины Harness protocol определены в [docs/harness/GLOSSARY.md](harness/GLOSSARY.md) и здесь не дублируются.
