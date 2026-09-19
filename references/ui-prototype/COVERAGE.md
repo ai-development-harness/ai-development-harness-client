@@ -1,20 +1,21 @@
 # AI Development Harness UI — Functional Coverage
 
-Основание: Harness v0.3.0, текущая продуктовая модель клиента и утверждённые UX-решения.
+Основание: Harness **v0.4.0**, текущая продуктовая модель клиента и утверждённые UX-решения.
 
 ## Главный принцип
 
 UI — графическая оболочка над repository-based Harness protocol.
 
-- Repository остаётся source of truth.
-- UI не реализует собственный orchestration.
+- Repository остаётся source of truth для REQ / ADR / STEP / evidence / reviews / audits.
+- UI не реализует собственный orchestration и не hardcode-ит CTS.
 - Read-only views строятся из repository / Git projections.
-- Commands передаются explicit runtime adapter.
-- Каждый run фиксирует `projectRoot + runtimeId`.
-- Live execution в MVP идёт через временный client-owned `ExecutionRun` и нормализованный event stream.
-- Свободный текст модели не считается Harness protocol state.
+- Commands проходят Harness deterministic preflight до runtime dispatch.
+- Harness Execution Status остаётся operational recovery state.
+- Runtime events нормализуются отдельно и не переопределяют protocol state.
+- Каждый запуск фиксирует `projectRoot + runtimeId`, а Harness возвращает `executionId`.
 - После mutation итоговое состояние перечитывается из repository / Git.
 - Runtime не выбирается автоматически.
+- Свободный текст модели не считается Harness protocol state.
 
 ## Client lifecycle
 
@@ -27,95 +28,205 @@ UI — графическая оболочка над repository-based Harness p
 | Initialized project | Overview |
 | Pre-INIT project | Project / INIT |
 | Create/edit `PROJECT_BRIEF.local.md` | Project / INIT |
-| Run `INIT PROJECT` | Project / INIT |
+| Run `PROJECT INIT` | Project / INIT |
 | Refresh after successful INIT | Project / INIT → Overview |
 | Invalid repository | Validation error |
 | Project switch | Topbar |
 | Explicit runtime | Topbar |
 | Command Palette | Global |
-| Immutable run context | Execution Run surface |
+| Command preflight / normalized chain | Command Palette / command surfaces |
+| Immutable execution context | Execution Run surface |
+| Unresolved executions / recovery | Overview / Execution Run surface |
 
 ## Canonical Harness commands
 
 | Command | UI surface |
 |---|---|
-| INIT PROJECT | Project / INIT |
-| ADD STEP | Roadmap |
-| FIND SKILL | Skills |
-| INSTALL SKILL | Skills candidate inspector |
-| CREATE SKILL | Skills |
-| GENERATE GITHUB TEMPLATES | GitHub collaboration |
-| QUICK FIX | Overview / Command Palette |
-| PLAN STEP-NNN | STEP Detail |
-| IMPLEMENT STEP-NNN | STEP Detail |
-| REVIEW STEP-NNN | STEP Detail / Reviews |
-| FIX STEP-NNN | Reviews / STEP Detail |
-| RUN STEP-NNN | STEP Detail / RUN drawer |
-| AUDIT STEP-NNN | Audits |
-| STATUS PROJECT | Overview |
-| NEXT STEP | Overview recommendation |
-| RECONCILE PROJECT | Audits / Reconcile |
-| RELEASE CHECK | Releases |
-| CHECK HARNESS UPDATE | Harness Updates |
-| UPDATE HARNESS | Harness Updates |
-| GIT CHECK | Git workspace |
-| COMMIT | Git workspace |
-| PUSH | Git workspace |
-| PR | GitHub collaboration / Git workspace |
-| SYNC | Git workspace |
+| `PROJECT INIT` | Project / INIT |
+| `PROJECT STATUS` | Overview |
+| `PROJECT RECONCILE` | Audits / Reconcile |
+| `PROJECT QUICK FIX:` | Overview / Command Palette |
+| `STEP ADD:` | Roadmap / Command Palette |
+| `STEP NEXT` | Overview recommendation |
+| `STEP PLAN STEP-NNN` | STEP Detail |
+| `STEP IMPLEMENT STEP-NNN` | STEP Detail |
+| `STEP REVIEW STEP-NNN` | STEP Detail / Reviews |
+| `STEP FIX STEP-NNN` | Reviews / STEP Detail |
+| `STEP RUN STEP-NNN` | STEP Detail / Execution Run |
+| `STEP AUDIT STEP-NNN` | Audits |
+| `SKILL FIND:` | Skills |
+| `SKILL INSTALL:` | Skills candidate inspector |
+| `SKILL CREATE:` | Skills |
+| `GITHUB GENERATE TEMPLATES` | GitHub collaboration / Command Palette |
+| `RELEASE CHECK` | Releases |
+| `HARNESS UPDATE CHECK [TO <tag>]` | Harness Updates |
+| `HARNESS UPDATE APPLY [TO <tag>]` | Harness Updates |
+| `GIT CHECK` | Git Workspace |
+| `GIT COMMIT[: hint]` | Git Workspace |
+| `GIT PUSH` | Git Workspace |
+| `GIT PR` | GitHub collaboration / Git Workspace |
+| `GIT SYNC` | Git Workspace |
 
-## v0.3.0 settings
+## Explicit chains / CTS
+
+MVP должен поддерживать chains, разрешённые текущим `.project/command-transitions.json`.
+
+Примеры:
+
+```text
+GIT CHECK > COMMIT > PUSH > PR
+STEP PLAN STEP-NNN > IMPLEMENT > REVIEW
+STEP REVIEW STEP-NNN > FIX > REVIEW
+HARNESS UPDATE CHECK TO <tag> > APPLY
+```
+
+До dispatch UI показывает deterministic preflight:
+
+- `VALID_COMMAND` / `VALID_CHAIN`;
+- normalized sequence;
+- transition conditions;
+- runtime preconditions.
+
+Structural errors вроде `INVALID_CHAIN`, `DOMAIN_MISMATCH`, `TARGET_MISMATCH` или `MISSING_INPUT` блокируют dispatch до первого segment.
+
+## v0.4.0 settings
 
 | Setting | UI | Constraint |
 |---|---|---|
-| `execution.maxFixReviewCycles` | Policies & Settings / RUN drawer | integer 1..5 |
-| `review.security` | Policies & Settings / Reviews / RUN | `auto | always` |
-| `review.tests` | Policies & Settings / Reviews / RUN | `auto | always` |
+| `execution.maxFixReviewCycles` | Policies & Settings / Execution Run | integer 1..5 |
+| `review.security` | Policies & Settings / Reviews | `auto | always` |
+| `review.tests` | Policies & Settings / Reviews | `auto | always` |
 | `skills.search.maxResults` | Policies & Settings / Skills | integer 1..10 |
+| `language.*` | Policies & Settings | BCP 47 tags |
 
 No hidden fallback is represented in UI.
 
 ## Important semantics
 
-### NEXT STEP
+### STEP NEXT
 
-One primary recommendation, not an execution lock. UI explicitly shows that other unblocked STEP can exist.
+One primary recommendation, not a global execution lock.
+
+Перед выбором нового STEP Harness resolver учитывает unresolved STEP-related executions. При interruption UI может рекомендовать exact resume command вместо нового STEP.
+
+Явно запрошенные независимые Git / Project / Harness commands остаются допустимыми.
+
+### STEP RUN
+
+`STEP RUN STEP-NNN` — root orchestration command.
+
+Canonical CTS child commands:
+
+```text
+STEP PLAN STEP-NNN
+STEP IMPLEMENT STEP-NNN
+STEP REVIEW STEP-NNN
+STEP FIX STEP-NNN
+```
+
+`VERIFY` и `CLOSE` не показываются как canonical commands. Verification — runtime/deterministic activity; finalization после REVIEW PASS относится к root RUN.
 
 ### AUDIT vs RECONCILE
 
-Separate concepts and actions. AUDIT is bounded; RECONCILE is project-wide.
+Separate concepts and actions:
 
-### QUICK FIX
+- `STEP AUDIT STEP-NNN` — bounded scope;
+- `PROJECT RECONCILE` — project-wide.
 
-No setting may expand QUICK FIX into behavior/API/data/security/architecture/dependency changes.
+Обе команды standalone-only.
+
+### PROJECT QUICK FIX
+
+No setting may expand `PROJECT QUICK FIX` into behavior/API/data/security/architecture/dependency changes.
 
 ### Reviews
 
 Independent review is always required. Specialized reviewers can be `auto` or `always`, never disabled through project settings.
 
+`FAIL` не является универсальным terminal error: в chain `STEP REVIEW ... > FIX > REVIEW` он активирует допустимый CTS edge к FIX.
+
+### Plan freshness
+
+STEP Detail показывает:
+
+- `Plan status`;
+- `Plan revision`;
+- `Plan basis`;
+- `Planned at`;
+- current / stale interpretation относительно текущего STEP contract.
+
+Stale plan предлагает exact action `STEP PLAN STEP-NNN`.
+
 ### Git
 
-`sync.allow_merge` and `sync.allow_rebase` are intentionally absent. Automatic merge/rebase remains a protocol invariant.
+`sync.allow_merge` и `sync.allow_rebase` отсутствуют. Automatic merge/rebase и force push остаются protocol invariants.
 
 ### Execution Run
 
 MVP capability для живого выполнения Harness-команд.
 
-- единый execution surface для runtime commands;
-- incremental output;
-- normalized runtime events;
-- safe Markdown/code rendering;
-- `waiting-for-input` для интерактивного продолжения;
-- active run сохраняется при навигации UI;
-- transport не фиксируется как SSE/WebSocket на уровне product contract;
-- protocol phases отображаются только из достоверных structured sources;
-- после mutation repository projections и Git state перечитываются.
+UI projection строится из:
 
-Это не Activity history и не новый source of truth.
+```text
+Harness Execution Status
++ runtime event stream
++ repository/Git projections
+```
+
+Показываются минимум:
+
+- `executionId`;
+- mode: `single | chain | orchestration`;
+- `rootCommand`;
+- `current.command`;
+- attempt;
+- execution status: `running | complete | blocked`;
+- command result: `SUCCESS | PASS | FAIL | BLOCKED`;
+- runtime/UI state;
+- incremental output;
+- structured interaction / approval;
+- final repository refresh.
+
+Runtime/UI `waiting-for-input` не заменяет Harness execution status.
+
+### Execution recovery
+
+MVP использует:
+
+```text
+.project/local/execution/execution-status.json
+tools/harness/resolve-next-command.py --json
+```
+
+Resolver state:
+
+```text
+RESUME
+NEXT
+DONE
+BLOCKED
+NOT_FOUND
+```
+
+Unresolved executions может быть несколько одновременно. Browser navigation/reload или runtime interruption не должны заставлять клиента угадывать продолжение по chat history.
 
 ### Activity / Runs
 
-Post-MVP client-owned projection. It must not become canonical state for STEP / review / evidence. Предпочтительное хранение execution metadata — local-only daily JSONL под `.project/local/activity/`.
+Post-MVP client-owned projection.
+
+```text
+Harness Execution Status
+→ operational recovery
+→ MVP
+
+Client Activity
+→ observability / telemetry / analytics
+→ Post-MVP
+```
+
+Activity не становится canonical state для STEP / review / evidence и не заменяет `execution-status.json`.
+
+Предпочтительное хранение client telemetry — local-only daily JSONL под `.project/local/activity/`.
 
 ## Delivery scope
 
@@ -123,16 +234,20 @@ Post-MVP client-owned projection. It must not become canonical state for STEP / 
 
 - Open/validate repository;
 - create/edit local Project Brief;
-- INIT PROJECT through UI;
+- `PROJECT INIT` through UI;
 - Overview / Roadmap / STEP / REQ / ADR / Knowledge;
-- Reviews / Audit / Reconcile / Releases;
+- `STEP NEXT` с recovery semantics;
+- Reviews / `STEP AUDIT` / `PROJECT RECONCILE` / Releases;
 - Skills;
-- Git Workspace и PR command;
+- Git Workspace и `GIT PR`;
+- explicit CTS chains;
+- deterministic command preflight;
+- restart-safe Execution Status / unresolved executions;
 - Agents & Models;
 - Harness Updates;
 - Policies & Settings;
 - Command Palette;
-- live Execution Run surface для runtime commands;
+- live Execution Run surface;
 - dark theme + accessibility baseline.
 
 ### Post-MVP
@@ -199,9 +314,10 @@ These are product architecture requirements, not dashboard screens:
 - `ClientApi` boundary;
 - replaceable transport/bootstrap;
 - no hardcoded localhost assumptions in UI domain model;
-- future secure local bridge may support hosted UI without cloud execution.
+- current repository Harness tooling is used for CTS/preflight/recovery instead of a duplicated client state machine;
+- future secure local bridge may support hosted UI without cloud execution;
 - runtime adapters prefer official programmable integration surfaces over TUI automation;
 - Codex adapter baseline: Codex App Server;
 - Claude Code adapter baseline: Claude Agent SDK;
 - PTY/stdout prompt scraping is not the primary production integration path;
-- adapter capability model must expose unsupported interactive/streaming features instead of guessing support.
+- adapter capability model exposes unsupported interactive/streaming features instead of guessing support.
