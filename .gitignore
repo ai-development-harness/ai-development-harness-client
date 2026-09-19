@@ -29,3 +29,11 @@ dist/
 build/
 coverage/
 .cache/
+
+# Локальные данные Nx вычисляются из workspace и не являются исходным кодом.
+.nx/
+out-tsc/
+test-output/
+tmp/
+
+vitest.config.*.timestamp*
