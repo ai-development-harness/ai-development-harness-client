@@ -8,16 +8,24 @@ Prototype хранится как обычные читаемые HTML/CSS/JS ф
 
 ## Baseline
 
-Reference синхронизирован с публичным Harness **v0.3.0** и визуальным языком текущего сайта AI Development Harness.
+Reference синхронизирован с публичным Harness **v0.4.0** и визуальным языком текущего сайта AI Development Harness.
 
-Ключевые v0.3.0 настройки, отражённые в интерфейсе:
+Ключевые возможности Harness v0.4.0, отражённые в интерфейсе:
 
+- canonical namespaced command interface;
+- deterministic CTS preflight через `validate-command.py`;
+- explicit same-domain chains;
+- universal `.project/local/execution/execution-status.json`;
+- restart-safe resolver `RESUME | NEXT | DONE | BLOCKED | NOT_FOUND`;
+- `STEP NEXT` с recovery незавершённых STEP executions;
+- `STEP RUN STEP-NNN` как root orchestration;
+- Plan status / revision / basis / planned-at;
 - `execution.maxFixReviewCycles` — 1..5;
 - `review.security` — `auto | always`;
 - `review.tests` — `auto | always`;
 - `skills.search.maxResults` — 1..10.
 
-Protocol invariants не превращаются в toggles: mandatory independent review, QUICK FIX safety boundary и запрет automatic merge/rebase остаются фиксированными правилами.
+Protocol invariants не превращаются в toggles: mandatory independent review, PROJECT QUICK FIX safety boundary и запрет automatic merge/rebase остаются фиксированными правилами.
 
 ## Структура reference
 
@@ -35,8 +43,10 @@ references/ui-prototype/
 ## Что есть в прототипе
 
 - Open Project + validation states;
-- Overview + корректная семантика `NEXT STEP` как рекомендации;
-- Project / INIT, включая pre-INIT сценарий `PROJECT_BRIEF.local.md → INIT PROJECT → repository refresh`;
+- Overview + корректная семантика `STEP NEXT` как рекомендации;
+- Project / INIT, включая pre-INIT сценарий `PROJECT_BRIEF.local.md → PROJECT INIT → repository refresh`;
+- deterministic command preflight / normalized chains;
+- unresolved execution recovery через Harness Execution Status;
 - Roadmap / STEP;
 - STEP Detail с Contract / Plan / Evidence / Review / History;
 - Requirements;
@@ -75,13 +85,16 @@ Prototype использует semantic tokens сайта:
 
 - команды не запускают реальные runtime adapters;
 - кнопки Harness command показывают preview / toast;
-- `RUN STEP` открывает интерактивный **Execution Run** с immutable `projectRoot + runtimeId`;
-- Execution Run демонстрирует incremental output, structured Harness phases и правило «текст модели ≠ protocol state»;
+- `STEP RUN STEP-NNN` открывает интерактивный **Execution Run** с `executionId`, mode, root/current command и immutable `projectRoot + runtimeId`;
+- Execution Run является projection над Harness Execution Status + runtime stream, а не отдельной state machine;
+- demo различает Harness execution status, command result и runtime/UI state;
 - в ходе demo runtime переходит в `waiting-for-input`, принимает structured clarification, продолжает тот же run, затем показывает native-style permission request;
 - разрешение/отклонение влияет на продолжение run; успешный путь заканчивается deterministic verification, independent review и repository refresh;
 - панель можно закрыть во время выполнения и открыть снова — demo run продолжает жить отдельно от текущего UI surface;
 - Settings интерактивно обновляет manifest preview, RUN policy и Skills shortlist;
-- Harness Updates демонстрирует read-only CHECK flow;
+- Harness Updates демонстрирует `HARNESS UPDATE CHECK` / `HARNESS UPDATE APPLY` и matching-check handoff;
+- Git Workspace показывает explicit chain `GIT CHECK > COMMIT > PUSH > PR`;
+- Overview показывает recovery-state для interrupted STEP execution;
 - таблица Roadmap фильтруется;
 - STEP tabs переключаются;
 - Command Palette работает с клавиатуры;
