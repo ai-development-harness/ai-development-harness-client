@@ -210,6 +210,8 @@ NOT_FOUND
 
 Unresolved executions может быть несколько одновременно. Browser navigation/reload или runtime interruption не должны заставлять клиента угадывать продолжение по chat history.
 
+Execution Status runtime-agnostic: для automatic reattach клиент использует минимальную local-only runtime binding, а при её отсутствии требует explicit runtime selection.
+
 ### Activity / Runs
 
 Post-MVP client-owned projection.
