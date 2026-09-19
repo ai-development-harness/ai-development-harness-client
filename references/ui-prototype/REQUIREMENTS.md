@@ -15,16 +15,16 @@ Open repository
 → pre-INIT validation
 → create/edit PROJECT_BRIEF.local.md
 → select runtime
-→ PROJECT INIT
+→ GIT PROJECT INIT
 → Overview
 → STEP NEXT
 → STEP Detail
 → STEP RUN STEP-NNN
 → Review / Evidence
 → GIT CHECK
-→ COMMIT
-→ PUSH
-→ PR
+→ GIT COMMIT
+→ GIT PUSH
+→ GIT PR
 ```
 
 Обязательные этапы этого сценария не должны требовать внешнего терминала.
@@ -999,7 +999,7 @@ Activity не должна автоматически сохранять:
 
 Отдельный экран может отображать PR, CI/checks, GitHub review status, templates/issues и связи STEP ↔ PR.
 
-Команда `PR` при этом уже должна работать в MVP.
+Команда `GIT PR` при этом уже должна работать в MVP.
 
 **Stage:** Post-MVP
 
