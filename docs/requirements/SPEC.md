@@ -264,7 +264,7 @@ Browser-first client должен быть доступен и согласов�
 
 #### Traceability
 
-- STEP: STEP-001, STEP-002, STEP-016, STEP-017, STEP-018, STEP-019, STEP-020, STEP-021, STEP-022
+- STEP: STEP-001, STEP-002, STEP-016, STEP-017, STEP-018, STEP-019, STEP-020, STEP-021, STEP-022, STEP-023
 - ADR: ADR-002, ADR-004, ADR-005 (historical), ADR-006
 
 ### REQ-012 — Live Execution Run

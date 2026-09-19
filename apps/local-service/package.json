@@ -5,12 +5,11 @@
   "devDependencies": {
     "@org/client-api": "workspace:*"
   },
-  "dependencies": {
-    "yaml": "^2.9.0"
-  },
   "nx": {
     "name": "local-service",
-    "tags": ["scope:service"],
+    "tags": [
+      "scope:service"
+    ],
     "targets": {
       "build": {
         "executor": "@nx/esbuild:esbuild",

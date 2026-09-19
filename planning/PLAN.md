@@ -25,6 +25,7 @@
 | STEP-020 | Linux supported containment profile research | RESEARCH | Критический | STEP-001, STEP-017 | Выполнено |
 | STEP-021 | Typed fail-closed enforcement repository projection | BUGFIX | Критический | STEP-001, STEP-017 | Выполнено |
 | STEP-022 | Решение о Linux containment primitive | ADR | Критический | STEP-020, STEP-021 | Запланировано |
+| STEP-023 | Удаление неиспользуемой direct dependency yaml | REFACTOR | Низкий | STEP-021 | Выполнено |
 
 ## Architectural reserve
 
