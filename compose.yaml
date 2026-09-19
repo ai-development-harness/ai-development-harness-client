@@ -1,0 +1,102 @@
+name: ai-development-harness-client-dev
+
+services:
+  init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    user: root
+    working_dir: /workspace
+    volumes:
+      - type: volume
+        source: node_modules
+        target: /workspace/node_modules
+      - type: volume
+        source: yarn-cache
+        target: /yarn-cache
+      - type: volume
+        source: yarn-state
+        target: /yarn-state
+      - type: volume
+        source: nx-cache
+        target: /workspace/.nx
+      - type: volume
+        source: generated
+        target: /workspace/.generated
+      - type: volume
+        source: test-output
+        target: /workspace/.test-output
+      - type: volume
+        source: tmp-work
+        target: /workspace/tmp
+    command:
+      - sh
+      - -c
+      - >-
+        mkdir -p /workspace/node_modules /yarn-cache /yarn-state /workspace/.nx /workspace/tmp &&
+        chown -R node:node /workspace/node_modules /yarn-cache /yarn-state /workspace/.nx /workspace/tmp &&
+        chown -R node:node /workspace/.generated /workspace/.test-output
+
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /workspace
+    init: true
+    user: node
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:4200:4200"
+    environment:
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+      NX_DAEMON: "false"
+      YARN_CACHE_FOLDER: /yarn-cache
+      YARN_INSTALL_STATE_PATH: /yarn-state/install-state.gz
+    volumes:
+      # Source остаётся на host; named volumes изолируют container-only dependencies и caches.
+      - type: bind
+        source: .
+        target: /workspace
+        read_only: true
+      - type: volume
+        source: node_modules
+        target: /workspace/node_modules
+      - type: volume
+        source: yarn-cache
+        target: /yarn-cache
+      - type: volume
+        source: yarn-state
+        target: /yarn-state
+      - type: volume
+        source: nx-cache
+        target: /workspace/.nx
+      - type: volume
+        source: generated
+        target: /workspace/.generated
+      - type: volume
+        source: test-output
+        target: /workspace/.test-output
+      - type: volume
+        source: tmp-work
+        target: /workspace/tmp
+    command:
+      - sh
+      - -c
+      - >-
+        corepack yarn install --immutable &&
+        exec corepack yarn nx run-many --target=serve --projects=web,local-service --parallel=2
+
+volumes:
+  node_modules:
+  yarn-cache:
+  yarn-state:
+  nx-cache:
+  generated:
+  test-output:
+  tmp-work:
