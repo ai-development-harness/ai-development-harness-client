@@ -2,7 +2,11 @@
   "name": "@org/web",
   "version": "0.0.1",
   "private": true,
+  "devDependencies": {
+    "@org/client-api": "workspace:*"
+  },
   "nx": {
-    "name": "web"
+    "name": "web",
+    "tags": ["scope:web"]
   }
 }

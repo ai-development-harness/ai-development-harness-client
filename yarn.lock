@@ -3096,9 +3096,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@org/client-api@workspace:*, @org/client-api@workspace:packages/client-api":
+  version: 0.0.0-use.local
+  resolution: "@org/client-api@workspace:packages/client-api"
+  languageName: unknown
+  linkType: soft
+
 "@org/local-service@workspace:apps/local-service":
   version: 0.0.0-use.local
   resolution: "@org/local-service@workspace:apps/local-service"
+  dependencies:
+    "@org/client-api": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -3152,6 +3160,8 @@ __metadata:
 "@org/web@workspace:apps/web":
   version: 0.0.0-use.local
   resolution: "@org/web@workspace:apps/web"
+  dependencies:
+    "@org/client-api": "workspace:*"
   languageName: unknown
   linkType: soft
 

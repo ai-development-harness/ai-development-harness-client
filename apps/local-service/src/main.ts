@@ -1,3 +1,5 @@
+export { createRepositoryClientApi } from './repository-projection';
+
 export const localServiceBoundary = {
   name: 'local-service',
 } as const;
