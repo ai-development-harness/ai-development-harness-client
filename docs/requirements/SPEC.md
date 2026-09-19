@@ -23,8 +23,8 @@
 
 #### Traceability
 
-- STEP: STEP-002, STEP-005, STEP-006
-- ADR: ADR-001
+- STEP: STEP-002, STEP-005, STEP-006, STEP-017, STEP-018, STEP-019, STEP-020, STEP-021, STEP-022
+- ADR: ADR-001, ADR-004, ADR-005 (historical), ADR-006
 
 ### REQ-002 — Открытие, проверка и pre-INIT lifecycle repository
 
@@ -193,7 +193,7 @@ UI поддерживает различимые canonical flows Skills, STEP AU
 #### Traceability
 
 - STEP: STEP-013
-- ADR: ADR-001
+- ADR: ADR-001, ADR-004
 
 ### REQ-009 — Generic Command Palette и canonical preflight
 
@@ -264,8 +264,8 @@ Browser-first client должен быть доступен и согласов�
 
 #### Traceability
 
-- STEP: STEP-001, STEP-002, STEP-016
-- ADR: ADR-002
+- STEP: STEP-001, STEP-002, STEP-016, STEP-017, STEP-018, STEP-019, STEP-020, STEP-021, STEP-022
+- ADR: ADR-002, ADR-004, ADR-005 (historical), ADR-006
 
 ### REQ-012 — Live Execution Run
 

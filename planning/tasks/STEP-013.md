@@ -4,7 +4,7 @@
 **Type:** IMPLEMENTATION
 **Приоритет:** Высокий
 **Фаза:** MVP tools
-**Depends on:** STEP-005, STEP-007
+**Depends on:** STEP-005, STEP-007, STEP-017
 ## Requirements
 
 - REQ-008
@@ -12,9 +12,12 @@
 ## ADR
 
 - ADR-001
+- ADR-004
 ## Risk flags
 
 - external-integration
+- security-sensitive
+- architecture
 ## Goal
 
 Показать Git health и безопасный canonical publication flow.
@@ -23,7 +26,7 @@
 Unsafe shortcuts запрещены protocol.
 ## Scope
 
-- Git projection, commands/chains, blockers.
+- Git projection, commands/chains, blockers и explicit capability boundary из ADR-004.
 ## Mutation policy
 
 ### Allowed
@@ -35,6 +38,7 @@ Unsafe shortcuts запрещены protocol.
 ### Forbidden
 
 - Force push/automatic merge/rebase.
+- Git subprocess для selected root без отдельного capability decision и security review.
 ## Out of scope
 
 - GitHub Collaboration Post-MVP screen.
