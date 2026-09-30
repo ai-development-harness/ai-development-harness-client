@@ -1,0 +1,117 @@
+# Человекочитаемое имя workflow в GitHub Actions UI.
+# Пример: "Product CI".
+name: Product CI
+
+# GitHub Actions events для product validation.
+# Пример: push + pull_request + ручной workflow_dispatch.
+on:
+  # Проверять каждый push любой ветки.
+  # Пример: commit в feature/* сразу получает product result.
+  push:
+  # Проверять Pull Request до merge.
+  # Пример: TypeScript regression блокируется в PR.
+  pull_request:
+  # Разрешить ручной повторный запуск.
+  # Пример: повтор проверки после transient runner failure.
+  workflow_dispatch:
+
+# Минимальные GitHub token permissions workflow.
+# Пример: только contents: read, так как workflow ничего не публикует.
+permissions:
+  # Только чтение repository contents.
+  # Пример: checkout не требует push permission.
+  contents: read
+
+# Набор product jobs.
+# Пример: один validate-product job для workspace.
+jobs:
+  # Стабильный machine-readable ID product validation job.
+  # Пример: validate-product используется как check name source.
+  validate-product:
+    # Отображаемое имя job.
+    # Пример: "Validate Product".
+    name: Validate Product
+    # Runner image.
+    # Пример: ubuntu-latest.
+    runs-on: ubuntu-latest
+    # Максимальное время выполнения.
+    # Пример: 15 минут защищают от зависшего install/build.
+    timeout-minutes: 15
+
+    # Environment overrides только для CI process.
+    # Пример: writable Yarn cache вместо project-local /yarn-cache.
+    env:
+      # Временный writable cache directory текущего runner.
+      # Пример: /home/runner/work/_temp/yarn-cache.
+      YARN_CACHE_FOLDER: /tmp/yarn-cache
+
+    # Последовательность product validation steps.
+    # Пример: checkout → Node → Corepack → install → lint/typecheck/test/build.
+    steps:
+      # Отображаемое имя checkout step.
+      # Пример: "Checkout repository".
+      - name: Checkout repository
+        # Официальный checkout action.
+        # Пример: actions/checkout@v7.
+        uses: actions/checkout@v7
+        # Параметры checkout.
+        # Пример: persist-credentials=false для read-only job.
+        with:
+          # Не сохранять GitHub token в local git config.
+          # Пример: false.
+          persist-credentials: false
+
+      # Настроить Node.js runtime.
+      # Пример: "Setup Node.js".
+      - name: Setup Node.js
+        # Официальный Node setup action.
+        # Пример: actions/setup-node@v4.
+        uses: actions/setup-node@v4
+        # Параметры Node runtime.
+        # Пример: node-version совпадает с package.json engines.
+        with:
+          # Версия Node.js для workspace.
+          # Пример: "24.21.0".
+          node-version: "24.21.0"
+
+      # Активировать package manager из packageManager.
+      # Пример: после setup-node включить Corepack до первого yarn.
+      - name: Enable Corepack
+        # Команда активации Corepack shims.
+        # Пример: corepack enable.
+        run: corepack enable
+
+      # Установить dependency graph.
+      # Пример: immutable install не меняет yarn.lock.
+      - name: Install dependencies
+        # Команда Yarn 4.
+        # Пример: yarn install --immutable.
+        run: yarn install --immutable
+
+      # Проверить lint rules.
+      # Пример: root script запускает web и local-service.
+      - name: Lint
+        # Команда workspace lint.
+        # Пример: yarn lint.
+        run: yarn lint
+
+      # Проверить TypeScript contracts.
+      # Пример: noEmit typecheck для обоих приложений.
+      - name: Typecheck
+        # Команда workspace typecheck.
+        # Пример: yarn typecheck.
+        run: yarn typecheck
+
+      # Запустить deterministic tests.
+      # Пример: runtime bridge tests работают без real runtimes.
+      - name: Test
+        # Команда workspace tests.
+        # Пример: yarn test.
+        run: yarn test
+
+      # Проверить production build.
+      # Пример: Nx build web + local-service.
+      - name: Build
+        # Команда workspace build.
+        # Пример: yarn build.
+        run: yarn build
