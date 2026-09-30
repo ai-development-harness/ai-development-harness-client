@@ -60,3 +60,93 @@ export type RepositoryLoadResult =
 export interface ClientApi {
   loadRepository(projectRoot: string): Promise<RepositoryLoadResult>;
 }
+
+
+export type RuntimeId = 'codex' | 'claude';
+export type RuntimeSupportState = 'native' | 'synthesized' | 'unsupported';
+
+export interface RuntimeCapabilities {
+  runtimeIdentity: RuntimeSupportState;
+  authenticatedAccount: RuntimeSupportState;
+  modelEffort: RuntimeSupportState;
+  interactiveInput: RuntimeSupportState;
+  streaming: RuntimeSupportState;
+  resume: RuntimeSupportState;
+  cancel: RuntimeSupportState;
+  subagents: RuntimeSupportState;
+  structuredOutput: RuntimeSupportState;
+  toolMcp: RuntimeSupportState;
+  sessionExecutionIds: RuntimeSupportState;
+}
+
+export interface RuntimeAccount {
+  authenticated: boolean;
+  displayName?: string;
+  email?: string;
+  organization?: string;
+  authMethod?: string;
+  avatarUrl?: string;
+}
+
+export type RuntimeEventType =
+  | 'run.started'
+  | 'model.message.delta'
+  | 'model.message.completed'
+  | 'tool.started'
+  | 'tool.completed'
+  | 'input.required'
+  | 'auth.required'
+  | 'run.interrupted'
+  | 'run.completed'
+  | 'run.failed';
+
+export interface RuntimeEvent {
+  schemaVersion: 1;
+  sequence: number;
+  type: RuntimeEventType;
+  runtimeId: RuntimeId;
+  sessionId: string;
+  executionId: string;
+  data: Readonly<Record<string, unknown>>;
+}
+
+export interface RuntimeEventPage {
+  events: readonly RuntimeEvent[];
+  nextCursor: number;
+}
+
+export interface RuntimeInput {
+  requestId: string;
+  value: string;
+}
+
+export interface RuntimeStartRequest {
+  projectRoot: string;
+  executionId: string;
+  rootCommand: string;
+  command: string;
+}
+
+export interface RuntimeSessionBinding {
+  schemaVersion: 1;
+  runtimeId: RuntimeId;
+  handle: string;
+  projectRoot: string;
+  executionId: string;
+  rootCommand: string;
+  terminal: boolean;
+  cursor: number;
+}
+
+export interface RuntimeStatus {
+  state:
+    | 'starting'
+    | 'running'
+    | 'input-required'
+    | 'interrupted'
+    | 'cancelled'
+    | 'completed'
+    | 'failed';
+  terminal: boolean;
+  reason?: string;
+}
