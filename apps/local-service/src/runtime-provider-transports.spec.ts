@@ -54,7 +54,7 @@ class FakePeer implements JsonRpcPeer {
     for (const listener of this.listeners) listener(notification);
   }
 
-  async close() {}
+  close() { return Promise.resolve(); }
 }
 
 class FakeProcess extends EventEmitter implements ProcessHandle {
@@ -79,6 +79,12 @@ class FakeLauncher implements ProcessLauncher {
     const process = new FakeProcess();
     this.calls.push({ command, args, cwd: options.cwd, process });
     return process;
+  }
+
+  call(index: number) {
+    const value = this.calls[index];
+    if (!value) throw new Error(`fake process call ${index} not found`);
+    return value;
   }
 
   latest(): FakeProcess {
@@ -209,7 +215,7 @@ describe('runtime provider transports', () => {
       command: 'claude',
       cwd: '/repo',
     });
-    expect(launcher.calls[0]!.args).toEqual([
+    expect(launcher.call(0).args).toEqual([
       '-p',
       '--output-format',
       'stream-json',
@@ -238,9 +244,9 @@ describe('runtime provider transports', () => {
 
     const resumePromise = surface.resume(started.handle);
     const resumed = launcher.latest();
-    expect(launcher.calls[1]!.cwd).toBe('/repo');
-    expect(launcher.calls[1]!.args).toContain('--resume');
-    expect(launcher.calls[1]!.args).toContain('claude-session-1');
+    expect(launcher.call(1).cwd).toBe('/repo');
+    expect(launcher.call(1).args).toContain('--resume');
+    expect(launcher.call(1).args).toContain('claude-session-1');
 
     // Provider может вернуть invocation-only id; canonical handle не меняется.
     resumed.stdout.write(
