@@ -1,78 +1,117 @@
 # Человекочитаемое имя workflow в GitHub Actions UI.
-# Проверяет фактический TypeScript/React workspace, а не только Harness metadata.
+# Пример: "Product CI".
 name: Product CI
 
-# События, на которых product code обязан проходить проверки.
+# GitHub Actions events для product validation.
+# Пример: push + pull_request + ручной workflow_dispatch.
 on:
-  # Проверять каждый push feature/main веток.
+  # Проверять каждый push любой ветки.
+  # Пример: commit в feature/* сразу получает product result.
   push:
-  # Проверять merge result каждого Pull Request.
+  # Проверять Pull Request до merge.
+  # Пример: TypeScript regression блокируется в PR.
   pull_request:
-  # Разрешить ручной повторный запуск без нового commit.
+  # Разрешить ручной повторный запуск.
+  # Пример: повтор проверки после transient runner failure.
   workflow_dispatch:
 
-# Workflow только читает repository contents.
+# Минимальные GitHub token permissions workflow.
+# Пример: только contents: read, так как workflow ничего не публикует.
 permissions:
-  # Checkout и package build не требуют write token.
+  # Только чтение repository contents.
+  # Пример: checkout не требует push permission.
   contents: read
 
 # Набор product jobs.
+# Пример: один validate-product job для workspace.
 jobs:
-  # Единственный deterministic workspace validation job.
+  # Стабильный machine-readable ID product validation job.
+  # Пример: validate-product используется как check name source.
   validate-product:
-    # Отображаемое имя required check.
+    # Отображаемое имя job.
+    # Пример: "Validate Product".
     name: Validate Product
-    # Linux runner совпадает с основной development/CI boundary.
+    # Runner image.
+    # Пример: ubuntu-latest.
     runs-on: ubuntu-latest
-    # Защита от зависшего dependency install/build.
+    # Максимальное время выполнения.
+    # Пример: 15 минут защищают от зависшего install/build.
     timeout-minutes: 15
 
-    # Последовательность product checks.
+    # Environment overrides только для CI process.
+    # Пример: writable Yarn cache вместо project-local /yarn-cache.
+    env:
+      # Временный writable cache directory текущего runner.
+      # Пример: /home/runner/work/_temp/yarn-cache.
+      YARN_CACHE_FOLDER: ${{ runner.temp }}/yarn-cache
+
+    # Последовательность product validation steps.
+    # Пример: checkout → Node → Corepack → install → lint/typecheck/test/build.
     steps:
-      # Получить проверяемый commit/PR merge ref.
+      # Отображаемое имя checkout step.
+      # Пример: "Checkout repository".
       - name: Checkout repository
-        # Официальный GitHub checkout action.
+        # Официальный checkout action.
+        # Пример: actions/checkout@v7.
         uses: actions/checkout@v7
         # Параметры checkout.
+        # Пример: persist-credentials=false для read-only job.
         with:
-          # Workflow не должен сохранять GitHub credentials в local git config.
+          # Не сохранять GitHub token в local git config.
+          # Пример: false.
           persist-credentials: false
 
-      # Установить Node version, объявленную project engines.
+      # Настроить Node.js runtime.
+      # Пример: "Setup Node.js".
       - name: Setup Node.js
         # Официальный Node setup action.
+        # Пример: actions/setup-node@v4.
         uses: actions/setup-node@v4
         # Параметры Node runtime.
+        # Пример: node-version совпадает с package.json engines.
         with:
-          # Совпадает с package.json engines и проверяемым workspace baseline.
+          # Версия Node.js для workspace.
+          # Пример: "24.21.0".
           node-version: "24.21.0"
 
-      # Активировать packageManager из package.json до первого вызова yarn.
+      # Активировать package manager из packageManager.
+      # Пример: после setup-node включить Corepack до первого yarn.
       - name: Enable Corepack
-        # После этого yarn разрешается как Yarn 4.18.0, а не runner-global Yarn 1.x.
+        # Команда активации Corepack shims.
+        # Пример: corepack enable.
         run: corepack enable
 
-      # Установить ровно lockfile dependency graph.
+      # Установить dependency graph.
+      # Пример: immutable install не меняет yarn.lock.
       - name: Install dependencies
-        # Immutable mode запрещает CI незаметно переписывать yarn.lock.
+        # Команда Yarn 4.
+        # Пример: yarn install --immutable.
         run: yarn install --immutable
 
-      # Проверить lint rules workspace.
+      # Проверить lint rules.
+      # Пример: root script запускает web и local-service.
       - name: Lint
-        # Root script запускает web и local-service.
+        # Команда workspace lint.
+        # Пример: yarn lint.
         run: yarn lint
 
-      # Проверить TypeScript contracts без emit.
+      # Проверить TypeScript contracts.
+      # Пример: noEmit typecheck для обоих приложений.
       - name: Typecheck
-        # Root script запускает typecheck обоих приложений.
+        # Команда workspace typecheck.
+        # Пример: yarn typecheck.
         run: yarn typecheck
 
-      # Запустить deterministic unit/contract tests.
+      # Запустить deterministic tests.
+      # Пример: runtime bridge tests работают без real runtimes.
       - name: Test
-        # Runtime bridge tests не требуют Codex/Claude process или сети.
+        # Команда workspace tests.
+        # Пример: yarn test.
         run: yarn test
 
-      # Проверить production compilation обоих приложений.
+      # Проверить production build.
+      # Пример: Nx build web + local-service.
       - name: Build
-        # Root script запускает Nx build для web и local-service.
+        # Команда workspace build.
+        # Пример: yarn build.
         run: yarn build
