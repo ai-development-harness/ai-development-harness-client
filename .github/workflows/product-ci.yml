@@ -1,44 +1,78 @@
+# Человекочитаемое имя workflow в GitHub Actions UI.
+# Проверяет фактический TypeScript/React workspace, а не только Harness metadata.
 name: Product CI
 
+# События, на которых product code обязан проходить проверки.
 on:
+  # Проверять каждый push feature/main веток.
   push:
+  # Проверять merge result каждого Pull Request.
   pull_request:
+  # Разрешить ручной повторный запуск без нового commit.
   workflow_dispatch:
 
+# Workflow только читает repository contents.
 permissions:
+  # Checkout и package build не требуют write token.
   contents: read
 
+# Набор product jobs.
 jobs:
+  # Единственный deterministic workspace validation job.
   validate-product:
+    # Отображаемое имя required check.
     name: Validate Product
+    # Linux runner совпадает с основной development/CI boundary.
     runs-on: ubuntu-latest
+    # Защита от зависшего dependency install/build.
     timeout-minutes: 15
+
+    # Последовательность product checks.
     steps:
+      # Получить проверяемый commit/PR merge ref.
       - name: Checkout repository
+        # Официальный GitHub checkout action.
         uses: actions/checkout@v7
+        # Параметры checkout.
         with:
+          # Workflow не должен сохранять GitHub credentials в local git config.
           persist-credentials: false
 
+      # Установить Node version, объявленную project engines.
       - name: Setup Node.js
+        # Официальный Node setup action.
         uses: actions/setup-node@v4
+        # Параметры Node runtime.
         with:
+          # Совпадает с package.json engines и проверяемым workspace baseline.
           node-version: "24.21.0"
-          cache: yarn
 
+      # Активировать packageManager из package.json до первого вызова yarn.
       - name: Enable Corepack
+        # После этого yarn разрешается как Yarn 4.18.0, а не runner-global Yarn 1.x.
         run: corepack enable
 
+      # Установить ровно lockfile dependency graph.
       - name: Install dependencies
+        # Immutable mode запрещает CI незаметно переписывать yarn.lock.
         run: yarn install --immutable
 
+      # Проверить lint rules workspace.
       - name: Lint
+        # Root script запускает web и local-service.
         run: yarn lint
 
+      # Проверить TypeScript contracts без emit.
       - name: Typecheck
+        # Root script запускает typecheck обоих приложений.
         run: yarn typecheck
 
+      # Запустить deterministic unit/contract tests.
       - name: Test
+        # Runtime bridge tests не требуют Codex/Claude process или сети.
         run: yarn test
 
+      # Проверить production compilation обоих приложений.
       - name: Build
+        # Root script запускает Nx build для web и local-service.
         run: yarn build
