@@ -376,6 +376,44 @@ export interface ClaudeAuthStatusRunner {
   run(): Promise<unknown>;
 }
 
+export function createClaudeAuthStatusRunner(options: {
+  launcher?: ProcessLauncher;
+  command?: string;
+} = {}): ClaudeAuthStatusRunner {
+  const launcher = options.launcher ?? createNodeProcessLauncher();
+  const command = options.command ?? 'claude';
+  return {
+    run() {
+      const child = launcher.spawn(command, ['auth', 'status', '--json'], {});
+      let stdout = '';
+      let stderr = '';
+      child.stdout.on('data', (chunk: Buffer | string) => {
+        stdout += String(chunk);
+      });
+      child.stderr.on('data', (chunk: Buffer | string) => {
+        stderr += String(chunk);
+      });
+      return new Promise<unknown>((resolve, reject) => {
+        child.once('exit', (code, signal) => {
+          if (code !== 0) {
+            reject(
+              new Error(
+                `CLAUDE_AUTH_STATUS_FAILED: code=${String(code)} signal=${String(signal)} ${stderr.slice(-4096)}`,
+              ),
+            );
+            return;
+          }
+          try {
+            resolve(JSON.parse(stdout));
+          } catch {
+            reject(new Error('CLAUDE_AUTH_STATUS_INVALID_JSON'));
+          }
+        });
+      });
+    },
+  };
+}
+
 export interface ClaudeProcessSession {
   handle: string;
   events: RuntimeDriverEvent[];
@@ -398,32 +436,51 @@ function claudeEventType(record: Record<string, unknown>): RuntimeEventType | un
 
 export function createClaudeCliSurface(options: {
   launcher?: ProcessLauncher;
-  authStatus: ClaudeAuthStatusRunner;
+  authStatus?: ClaudeAuthStatusRunner;
   command?: string;
-}): ClaudeRuntimeSurface {
+} = {}): ClaudeRuntimeSurface {
   const launcher = options.launcher ?? createNodeProcessLauncher();
   const executable = options.command ?? 'claude';
+  const authStatus =
+    options.authStatus ??
+    createClaudeAuthStatusRunner({ launcher, command: executable });
   const sessions = new Map<string, ClaudeProcessSession>();
 
+  function writeUserInput(process: ProcessHandle, value: string): void {
+    writeJsonLine(process.stdin, {
+      type: 'user',
+      message: {
+        role: 'user',
+        content: [{ type: 'text', text: value }],
+      },
+    });
+  }
+
   function spawnSession(
-    request: RuntimeStartRequest,
+    projectRoot: string,
     resumeHandle?: string,
+    initialInput?: string,
   ): Promise<ClaudeProcessSession> {
     const args = [
       '-p',
-      request.command,
       '--output-format',
       'stream-json',
+      '--input-format',
+      'stream-json',
       '--verbose',
+      '--include-partial-messages',
     ];
     if (resumeHandle) args.push('--resume', resumeHandle);
 
-    const process = launcher.spawn(executable, args, { cwd: request.projectRoot });
+    const process = launcher.spawn(executable, args, { cwd: projectRoot });
+    const events: RuntimeDriverEvent[] = [];
+    let settled = false;
+    let canonicalHandle = resumeHandle;
+
+    if (initialInput !== undefined) writeUserInput(process, initialInput);
+
     return new Promise<ClaudeProcessSession>((resolve, reject) => {
       const lines = createInterface({ input: process.stdout });
-      const events: RuntimeDriverEvent[] = [];
-      let settled = false;
-      let canonicalHandle = resumeHandle;
 
       lines.on('line', (line) => {
         let value: unknown;
@@ -437,14 +494,11 @@ export function createClaudeCliSurface(options: {
         const type = claudeEventType(record);
         if (type) events.push({ type, data: record });
 
-        if (
-          !settled &&
-          record.type === 'system' &&
-          record.subtype === 'init'
-        ) {
-          const observed = typeof record.session_id === 'string' ? record.session_id : undefined;
-          // При resume canonical handle остаётся исходным: некоторые версии Claude
-          // публикуют новый invocation session_id, который нельзя использовать для следующего resume.
+        if (!settled && record.type === 'system' && record.subtype === 'init') {
+          const observed =
+            typeof record.session_id === 'string' ? record.session_id : undefined;
+          // На resume canonical handle всегда остаётся тем, который запросил host.
+          // Это защищает recovery от invocation-only session_id некоторых версий CLI.
           canonicalHandle ??= observed;
           if (!canonicalHandle) {
             reject(new Error('CLAUDE_SESSION_ID_MISSING'));
@@ -496,7 +550,7 @@ export function createClaudeCliSurface(options: {
 
   return {
     async authStatus() {
-      const value = asRecord(await options.authStatus.run());
+      const value = asRecord(await authStatus.run());
       const authenticated =
         value.loggedIn === true ||
         value.authenticated === true ||
@@ -520,17 +574,25 @@ export function createClaudeCliSurface(options: {
     },
 
     async start(request) {
-      const session = await spawnSession(request);
+      const session = await spawnSession(
+        request.projectRoot,
+        undefined,
+        request.command,
+      );
       return { handle: session.handle };
     },
 
     async resume(handle) {
-      const session = sessions.get(handle);
-      if (!session) throw new Error('CLAUDE_SESSION_NOT_FOUND');
-      if (!session.status.terminal && session.process.exitCode === null) {
+      const existing = sessions.get(handle);
+      if (existing && !existing.status.terminal && existing.process.exitCode === null) {
         return { handle };
       }
-      throw new Error('CLAUDE_RESUME_REQUIRES_NEW_COMMAND_CONTEXT');
+      const projectRoot =
+        existing && typeof existing.events[0]?.data?.cwd === 'string'
+          ? existing.events[0].data.cwd
+          : process.cwd();
+      const session = await spawnSession(projectRoot, handle);
+      return { handle: session.handle };
     },
 
     async cancel(handle) {
@@ -542,8 +604,11 @@ export function createClaudeCliSurface(options: {
       session.status = { state: 'cancelled', terminal: true };
     },
 
-    async sendInput(_handle, _input) {
-      throw new Error('CLAUDE_INTERACTIVE_INPUT_REQUIRES_STREAM_INPUT');
+    async sendInput(handle, input) {
+      const session = sessions.get(handle);
+      if (!session) throw new Error('CLAUDE_SESSION_NOT_FOUND');
+      if (session.status.terminal) throw new Error('CLAUDE_SESSION_TERMINAL');
+      writeUserInput(session.process, input.value);
     },
 
     async status(handle) {
