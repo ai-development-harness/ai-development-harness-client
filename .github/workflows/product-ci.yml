@@ -43,7 +43,7 @@ jobs:
     env:
       # Временный writable cache directory текущего runner.
       # Пример: /home/runner/work/_temp/yarn-cache.
-      YARN_CACHE_FOLDER: ${{ runner.temp }}/yarn-cache
+      YARN_CACHE_FOLDER: /tmp/yarn-cache
 
     # Последовательность product validation steps.
     # Пример: checkout → Node → Corepack → install → lint/typecheck/test/build.
