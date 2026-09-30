@@ -1,6 +1,4 @@
 export { createRepositoryClientApi } from './repository-projection';
-export * from './runtime-bridge';
-export * from './runtime-provider-transports';
 
 export const localServiceBoundary = {
   name: 'local-service',
