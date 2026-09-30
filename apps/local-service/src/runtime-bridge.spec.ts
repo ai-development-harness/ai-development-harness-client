@@ -50,7 +50,7 @@ function surface(account: RuntimeAccount) {
     sendInput: async (handle: string, input: RuntimeInput): Promise<void> => {
       calls.inputs.push({ handle, input });
     },
-    status: async (_handle: string): Promise<RuntimeStatus> => ({
+    status: async (): Promise<RuntimeStatus> => ({
       state: 'running',
       terminal: false,
     }),

@@ -253,7 +253,7 @@ export function createRuntimeBridge(options: {
       );
       return {
         events,
-        nextCursor: events.length > 0 ? events[events.length - 1]!.sequence : afterSequence,
+        nextCursor: events.at(-1)?.sequence ?? afterSequence,
       };
     },
   };
