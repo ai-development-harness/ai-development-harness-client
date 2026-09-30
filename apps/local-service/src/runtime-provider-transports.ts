@@ -5,7 +5,6 @@ import type {
   RuntimeAccount,
   RuntimeEventType,
   RuntimeInput,
-  RuntimeStartRequest,
   RuntimeStatus,
 } from '@org/client-api';
 
@@ -13,7 +12,6 @@ import type {
   ClaudeRuntimeSurface,
   CodexRuntimeSurface,
   RuntimeDriverEvent,
-  RuntimeDriverSession,
 } from './runtime-bridge';
 
 type JsonObject = Readonly<Record<string, unknown>>;
