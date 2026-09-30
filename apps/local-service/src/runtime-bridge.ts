@@ -5,6 +5,7 @@ import type {
   RuntimeEventPage,
   RuntimeId,
   RuntimeInput,
+  RuntimeClientApi,
   RuntimeSessionBinding,
   RuntimeStartRequest,
   RuntimeStatus,
@@ -333,5 +334,38 @@ export function createClaudeRuntimeDriver(surface: ClaudeRuntimeSurface): Runtim
     sendInput: (handle, input) => surface.sendInput(handle, input),
     status: (handle) => surface.status(handle),
     readEvents: (handle, afterSequence) => surface.readEvents(handle, afterSequence),
+  };
+}
+
+
+export function createRuntimeClientApi(bridge: RuntimeBridge): RuntimeClientApi {
+  return {
+    async listRuntimeIds() {
+      return bridge.listRuntimeIds();
+    },
+    async getRuntimeCapabilities(runtimeId) {
+      return bridge.getCapabilities(runtimeId);
+    },
+    async getRuntimeAccount(runtimeId) {
+      return bridge.getAccount(runtimeId);
+    },
+    async startRuntime(runtimeId, request) {
+      return bridge.start(runtimeId, request);
+    },
+    async resumeRuntime(binding) {
+      return bridge.resume(binding);
+    },
+    async cancelRuntime(binding) {
+      await bridge.cancel(binding);
+    },
+    async sendRuntimeInput(binding, input) {
+      await bridge.sendInput(binding, input);
+    },
+    async getRuntimeStatus(binding) {
+      return bridge.status(binding);
+    },
+    async readRuntimeEvents(binding, afterSequence) {
+      return bridge.readEvents(binding, afterSequence);
+    },
   };
 }
