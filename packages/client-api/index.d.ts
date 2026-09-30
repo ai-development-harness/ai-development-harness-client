@@ -150,3 +150,16 @@ export interface RuntimeStatus {
   terminal: boolean;
   reason?: string;
 }
+
+
+export interface RuntimeClientApi {
+  listRuntimeIds(): Promise<readonly RuntimeId[]>;
+  getRuntimeCapabilities(runtimeId: RuntimeId): Promise<RuntimeCapabilities>;
+  getRuntimeAccount(runtimeId: RuntimeId): Promise<RuntimeAccount>;
+  startRuntime(runtimeId: RuntimeId, request: RuntimeStartRequest): Promise<RuntimeSessionBinding>;
+  resumeRuntime(binding: RuntimeSessionBinding): Promise<RuntimeSessionBinding>;
+  cancelRuntime(binding: RuntimeSessionBinding): Promise<void>;
+  sendRuntimeInput(binding: RuntimeSessionBinding, input: RuntimeInput): Promise<void>;
+  getRuntimeStatus(binding: RuntimeSessionBinding): Promise<RuntimeStatus>;
+  readRuntimeEvents(binding: RuntimeSessionBinding, afterSequence: number): Promise<RuntimeEventPage>;
+}
