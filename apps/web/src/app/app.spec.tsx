@@ -1,8 +1,38 @@
 import { act, render, waitFor } from '@testing-library/react';
-import type { ClientApi } from '@org/client-api';
+import type { ClientApi, RuntimeClientApi } from '@org/client-api';
 import { vi } from 'vitest';
 
 import App from './app';
+
+function runtimeApi(overrides: Partial<RuntimeClientApi> = {}): RuntimeClientApi {
+  return {
+    listRuntimeIds: vi.fn().mockResolvedValue(['claude', 'codex']),
+    getRuntimeCapabilities: vi.fn().mockResolvedValue({
+      runtimeIdentity: 'native',
+      authenticatedAccount: 'native',
+      modelEffort: 'native',
+      interactiveInput: 'native',
+      streaming: 'native',
+      resume: 'native',
+      cancel: 'native',
+      subagents: 'native',
+      structuredOutput: 'native',
+      toolMcp: 'native',
+      sessionExecutionIds: 'native',
+    }),
+    getRuntimeAccount: vi.fn().mockResolvedValue({
+      authenticated: true,
+      email: 'dev@example.test',
+    }),
+    startRuntime: vi.fn(),
+    resumeRuntime: vi.fn(),
+    cancelRuntime: vi.fn(),
+    sendRuntimeInput: vi.fn(),
+    getRuntimeStatus: vi.fn(),
+    readRuntimeEvents: vi.fn(),
+    ...overrides,
+  };
+}
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -80,5 +110,24 @@ describe('App', () => {
     screen.rerender(<App clientApi={secondClient} />);
 
     expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('не выбирает runtime автоматически', () => {
+    const api = runtimeApi();
+    const screen = render(<App runtimeApi={api} />);
+
+    expect(screen.getByText('Не выбран')).toBeTruthy();
+    expect(api.getRuntimeAccount).not.toHaveBeenCalled();
+    expect(api.getRuntimeCapabilities).not.toHaveBeenCalled();
+  });
+
+  it('показывает account и capabilities только выбранного runtime', async () => {
+    const api = runtimeApi();
+    const screen = render(<App runtimeApi={api} selectedRuntime="codex" />);
+
+    await waitFor(() => expect(api.getRuntimeAccount).toHaveBeenCalledWith('codex'));
+    expect(api.getRuntimeCapabilities).toHaveBeenCalledWith('codex');
+    expect(screen.getByText('dev@example.test')).toBeTruthy();
+    expect(screen.getByText('Capabilities: 11')).toBeTruthy();
   });
 });
