@@ -414,6 +414,32 @@ export function createClaudeAuthStatusRunner(options: {
   };
 }
 
+interface ClaudeHandle {
+  projectRoot: string;
+  sessionId: string;
+}
+
+function encodeClaudeHandle(value: ClaudeHandle): string {
+  return `claude:v1:${Buffer.from(
+    JSON.stringify(value),
+    'utf8',
+  ).toString('base64url')}`;
+}
+
+function decodeClaudeHandle(handle: string): ClaudeHandle {
+  const prefix = 'claude:v1:';
+  if (!handle.startsWith(prefix)) throw new Error('CLAUDE_HANDLE_INVALID');
+  try {
+    const value = JSON.parse(
+      Buffer.from(handle.slice(prefix.length), 'base64url').toString('utf8'),
+    ) as Partial<ClaudeHandle>;
+    if (!value.projectRoot || !value.sessionId) throw new Error('invalid');
+    return { projectRoot: value.projectRoot, sessionId: value.sessionId };
+  } catch {
+    throw new Error('CLAUDE_HANDLE_INVALID');
+  }
+}
+
 export interface ClaudeProcessSession {
   handle: string;
   events: RuntimeDriverEvent[];
@@ -470,12 +496,13 @@ export function createClaudeCliSurface(options: {
       '--verbose',
       '--include-partial-messages',
     ];
-    if (resumeHandle) args.push('--resume', resumeHandle);
+    const resume = resumeHandle ? decodeClaudeHandle(resumeHandle) : undefined;
+    if (resume) args.push('--resume', resume.sessionId);
 
     const process = launcher.spawn(executable, args, { cwd: projectRoot });
     const events: RuntimeDriverEvent[] = [];
     let settled = false;
-    let canonicalHandle = resumeHandle;
+    let canonicalSessionId = resume?.sessionId;
 
     if (initialInput !== undefined) writeUserInput(process, initialInput);
 
@@ -499,11 +526,14 @@ export function createClaudeCliSurface(options: {
             typeof record.session_id === 'string' ? record.session_id : undefined;
           // На resume canonical handle всегда остаётся тем, который запросил host.
           // Это защищает recovery от invocation-only session_id некоторых версий CLI.
-          canonicalHandle ??= observed;
-          if (!canonicalHandle) {
+          canonicalSessionId ??= observed;
+          if (!canonicalSessionId) {
             reject(new Error('CLAUDE_SESSION_ID_MISSING'));
             return;
           }
+          const canonicalHandle =
+            resumeHandle ??
+            encodeClaudeHandle({ projectRoot, sessionId: canonicalSessionId });
           const session: ClaudeProcessSession = {
             handle: canonicalHandle,
             events,
@@ -515,7 +545,10 @@ export function createClaudeCliSurface(options: {
           resolve(session);
         }
 
-        if (record.type === 'result' && canonicalHandle) {
+        if (record.type === 'result' && canonicalSessionId) {
+          const canonicalHandle =
+            resumeHandle ??
+            encodeClaudeHandle({ projectRoot, sessionId: canonicalSessionId });
           const session = sessions.get(canonicalHandle);
           if (session) {
             session.status =
@@ -535,7 +568,10 @@ export function createClaudeCliSurface(options: {
           );
           return;
         }
-        if (canonicalHandle) {
+        if (canonicalSessionId) {
+          const canonicalHandle =
+            resumeHandle ??
+            encodeClaudeHandle({ projectRoot, sessionId: canonicalSessionId });
           const session = sessions.get(canonicalHandle);
           if (session && !session.status.terminal) {
             session.status =
@@ -587,11 +623,8 @@ export function createClaudeCliSurface(options: {
       if (existing && !existing.status.terminal && existing.process.exitCode === null) {
         return { handle };
       }
-      const projectRoot =
-        existing && typeof existing.events[0]?.data?.cwd === 'string'
-          ? existing.events[0].data.cwd
-          : process.cwd();
-      const session = await spawnSession(projectRoot, handle);
+      const decoded = decodeClaudeHandle(handle);
+      const session = await spawnSession(decoded.projectRoot, handle);
       return { handle: session.handle };
     },
 
