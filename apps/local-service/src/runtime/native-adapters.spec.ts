@@ -144,6 +144,40 @@ describe('Codex App Server protocol', () => {
     expect(JSON.stringify(events)).not.toContain('rm -rf');
   });
 
+  it('одобрение Codex требует точный предварительно показанный command', async () => {
+    const fake = codexPort([
+      {
+        method: 'item/started',
+        params: {
+          threadId: 'thr-1', turnId: 'turn-1',
+          item: { id: 'item-123', type: 'commandExecution', command: 'npm test' },
+        },
+      },
+      {
+        method: 'item/commandExecution/requestApproval', id: 123,
+        params: { threadId: 'thr-1', turnId: 'turn-1', itemId: 'item-123' },
+      },
+      {
+        method: 'turn/completed',
+        params: {
+          threadId: 'thr-1', turnId: 'turn-1',
+          turn: { id: 'turn-1', status: 'completed' },
+        },
+      },
+    ]);
+    const seen: string[] = [];
+    const adapter = createCodexAppServerAdapter({ rpc: fake.port });
+    const { run } = createRun({
+      requestPermission: async (item) => {
+        seen.push(item.preview ?? '');
+        return 'allow';
+      },
+    });
+    expect((await adapter.execute(run)).status).toBe('completed');
+    expect(seen).toEqual(['npm test']);
+    expect(fake.replies).toEqual([{ id: 123, decision: 'accept' }]);
+  });
+
   it('обнаруживает только structured missing session до turn/start', async () => {
     const fake = codexPort([], { failNativeResume: true });
     const adapter = createCodexAppServerAdapter({
@@ -255,6 +289,32 @@ describe('Claude Agent SDK query adapter', () => {
       type: 'input.required', data: { tool: 'Bash' },
     });
     expect(JSON.stringify(events)).not.toContain('secret');
+  });
+
+  it('явный Claude approval получает локальный preview, но не попадает в event stream', async () => {
+    const seen: string[] = [];
+    let decision: unknown;
+    const sdk: ClaudeSdkPort = {
+      query: async function* (request) {
+        decision = await request.options.canUseTool('Bash', { command: 'npm test' });
+        yield { type: 'system', subtype: 'init', session_id: 's' };
+        yield { type: 'result', subtype: 'success', is_error: false };
+      },
+    };
+    const adapter = createClaudeAgentSdkAdapter({ sdk });
+    const { run, events } = createRun({
+      requestPermission: async (item) => {
+        seen.push(item.preview ?? '');
+        return 'allow';
+      },
+    });
+    expect((await adapter.execute(run)).status).toBe('completed');
+    expect(seen).toEqual(['npm test']);
+    expect(decision).toEqual({
+      behavior: 'allow',
+      updatedInput: { command: 'npm test' },
+    });
+    expect(JSON.stringify(events)).not.toContain('npm test');
   });
 
   it('использует safe native fallback только до любой модели или tool', async () => {
