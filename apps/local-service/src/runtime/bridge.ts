@@ -105,9 +105,14 @@ export class RuntimeBridge {
   ): Promise<BridgeResult> {
     // Canonical decision MUST be obtained before any native adapter invocation.
     // No implicit provider switch even if account/capability is unavailable.
-    const admission = await this.authority.prepare(request, {
-      avoidNativeReuse: false,
-    });
+    let admission: Admission;
+    try {
+      admission = await this.authority.prepare(request, {
+        avoidNativeReuse: false,
+      });
+    } catch {
+      return blocked('HARNESS_ADMISSION_UNAVAILABLE');
+    }
     if (admission.status === 'blocked') return blocked(admission.reasonCode);
     if (!acceptable(admission, request, false)) return blocked('INVALID_HARNESS_ADMISSION');
     if (options.signal.aborted) return { status: 'interrupted' };
@@ -118,7 +123,12 @@ export class RuntimeBridge {
     this.activeExecutions.add(admission.executionId);
     try {
     const adapter = this.adapters[request.runtimeId];
-    const capabilities = await adapter.getCapabilities();
+    let capabilities: Readonly<Record<RuntimeCapability, SupportState>>;
+    try {
+      capabilities = await adapter.getCapabilities();
+    } catch {
+      return blocked('RUNTIME_CAPABILITIES_UNAVAILABLE');
+    }
     for (const name of admission.requiredCapabilities ?? []) {
       if (capabilities[name] !== 'native' && capabilities[name] !== 'synthesized') {
         return blocked('REQUIRED_CAPABILITY_UNAVAILABLE');
@@ -168,9 +178,14 @@ export class RuntimeBridge {
 
       // A missing native session means NO turn/query has started. Re-query
       // Harness authority, never retry unsafe side effects based on SDK errors.
-      const fresh = await this.authority.prepare(request, {
-        avoidNativeReuse: true,
-      });
+      let fresh: Admission;
+      try {
+        fresh = await this.authority.prepare(request, {
+          avoidNativeReuse: true,
+        });
+      } catch {
+        return blocked('HARNESS_ADMISSION_UNAVAILABLE');
+      }
       if (fresh.status === 'blocked') return blocked(fresh.reasonCode);
       if (!acceptable(fresh, request, true) || fresh.nativeAction !== 'start') {
         return blocked('CANONICAL_REENTRY_UNPROVEN');
