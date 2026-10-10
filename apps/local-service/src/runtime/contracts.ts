@@ -57,6 +57,8 @@ export interface PermissionRequest {
   name: string;
   /** Не передаём raw command args, environment или токены в UI event/log. */
   requestId?: string;
+  /** Только для интерактивного диалога, НЕ для event stream/log. */
+  preview?: string;
 }
 
 export type PermissionBroker = (request: PermissionRequest) => Promise<'allow' | 'deny'>;
