@@ -27,11 +27,13 @@ function codexPort(
   options: { failNativeResume?: boolean } = {},
 ) {
   const methods: string[] = [];
+  const calls: Array<{ method: string; params: Readonly<Record<string, unknown>> | undefined }> = [];
   const replies: { id: string | number; decision: unknown }[] = [];
   const port: CodexRpcPort = {
     initialize: vi.fn(async () => undefined),
-    request: vi.fn(async (method, _params) => {
+    request: vi.fn(async (method, params) => {
       methods.push(method);
+      calls.push({ method, params });
       if (method === 'thread/resume') {
         if (options.failNativeResume) throw { code: 'THREAD_NOT_FOUND' };
         return { thread: { id: 'thr-1' } };
@@ -56,7 +58,7 @@ function codexPort(
       replies.push({ id, decision: result.decision });
     },
   };
-  return { port, methods, replies };
+  return { port, methods, replies, calls };
 }
 
 describe('Codex App Server protocol', () => {
@@ -100,6 +102,14 @@ describe('Codex App Server protocol', () => {
     const { run, events } = createRun();
     expect(await adapter.execute(run)).toEqual({ status: 'completed', sessionId: 'thr-1' });
     expect(fake.methods).toEqual(['thread/start', 'turn/start']);
+    expect(fake.calls.find((entry) => entry.method === 'thread/start')?.params)
+      .toMatchObject({
+        cwd: '/project',
+        sandbox: 'workspace-write',
+        approvalPolicy: 'on-request',
+      });
+    expect(fake.calls.find((entry) => entry.method === 'turn/start')?.params)
+      .toMatchObject({ approvalPolicy: 'on-request' });
     expect(fake.port.initialize).toHaveBeenCalledTimes(1);
     expect(events.map((event) => event.type)).toEqual([
       'run.started', 'model.message.delta', 'tool.started',
@@ -215,6 +225,8 @@ describe('Claude Agent SDK query adapter', () => {
     });
     const input = captured[0] as { options: { resume: string; cwd: string } };
     expect(input.options.resume).toBe('claude-previous');
+    expect((captured[0] as { options: { settingSources: unknown[] } }).options.settingSources)
+      .toEqual([]);
     expect(input.options.cwd).toBe('/project');
     expect(events.map((event) => event.type)).toEqual([
       'run.started', 'model.message.delta', 'tool.started',
