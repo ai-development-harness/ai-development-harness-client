@@ -118,6 +118,9 @@ export function createCodexAppServerAdapter(
         try {
           const restored = await rpc.request('thread/resume', {
             threadId: run.nativeSessionId,
+            cwd: run.projectRoot,
+            approvalPolicy: 'on-request',
+            sandbox: 'workspace-write',
           });
           threadId = nestedId(restored, 'thread') ?? run.nativeSessionId;
         } catch (error) {
@@ -131,6 +134,10 @@ export function createCodexAppServerAdapter(
       } else {
         const started = await rpc.request('thread/start', {
           cwd: run.projectRoot,
+          // Не наследовать более опасную policy из пользовательского app-server
+          // config. Workspace writes допускаются только в разрешённом project.
+          approvalPolicy: 'on-request',
+          sandbox: 'workspace-write',
         });
         const id = nestedId(started, 'thread');
         if (!id) throw new TypeError('Codex thread/start did not return thread.id');
@@ -141,6 +148,9 @@ export function createCodexAppServerAdapter(
       const turn = await rpc.request('turn/start', {
         threadId,
         input: [{ type: 'text', text: run.prompt }],
+        approvalPolicy: 'on-request',
+        // sandboxPolicy в turn/start имеет *другой* shape, чем sandbox
+        // mode в thread/start. Наследуем уже зафиксированный на thread.
       });
       const turnId = nestedId(turn, 'turn');
       if (!turnId) throw new TypeError('Codex turn/start did not return turn.id');
@@ -214,7 +224,9 @@ export function createCodexAppServerAdapter(
           } else if (message.method === 'turn/completed') {
             const turnRecord = objectField(data, 'turn');
             const completedTurn = text(turnRecord, 'id');
-            if (completedTurn && completedTurn !== turnId) continue;
+            // Другой turn или сообщение без идентичности не вправе
+            // завершить текущий Harness execution.
+            if (completedTurn !== turnId) continue;
             const status = text(turnRecord, 'status');
             if (status === 'completed') {
               emit(run, 'run.completed', threadId);
