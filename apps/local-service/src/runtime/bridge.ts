@@ -75,6 +75,9 @@ function acceptable(
 export class RuntimeBridge {
   private readonly authority: HarnessAuthority;
   private readonly adapters: Readonly<Record<RuntimeId, NativeRuntimeAdapter>>;
+  // Даже если GUI нажал Run дважды, один Harness executionId не должен
+  // запускать два native turns с возможными дублированными side effects.
+  private readonly activeExecutions = new Set<string>();
 
   constructor(options: BridgeOptions) {
     this.authority = options.authority;
@@ -109,6 +112,11 @@ export class RuntimeBridge {
     if (!acceptable(admission, request, false)) return blocked('INVALID_HARNESS_ADMISSION');
     if (options.signal.aborted) return { status: 'interrupted' };
 
+    if (this.activeExecutions.has(admission.executionId)) {
+      return blocked('EXECUTION_ALREADY_ACTIVE');
+    }
+    this.activeExecutions.add(admission.executionId);
+    try {
     const adapter = this.adapters[request.runtimeId];
     const capabilities = await adapter.getCapabilities();
     for (const name of admission.requiredCapabilities ?? []) {
@@ -185,6 +193,9 @@ export class RuntimeBridge {
           ? { status: 'interrupted' }
           : { status: 'failed', reasonCode: 'NATIVE_RUNTIME_FAILED' };
       }
+    }
+    } finally {
+      this.activeExecutions.delete(admission.executionId);
     }
   }
 }
