@@ -1,0 +1,43 @@
+name: Runtime Bridge Contracts
+
+# Новый provider-neutral слой пока не подключён к main.ts. Проверяем типы и
+# scripted protocol cases отдельно, не выполняя реальную модель/сервис.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-bridge-contracts:
+    name: Typecheck and test native runtime bridge
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.21.0"
+
+      - name: Install immutable Yarn workspace
+        run: |
+          corepack enable
+          corepack yarn install --immutable
+
+      - name: Typecheck local-service
+        run: corepack yarn nx typecheck local-service --skip-nx-cache
+
+      - name: Scripted runtime adapter tests
+        run: corepack yarn nx test local-service --skip-nx-cache
+
+      - name: Validate source boundaries
+        run: |
+          test -f apps/local-service/src/runtime/bridge.ts
+          ! grep -Eq 'from .node:child_process.|from .@anthropic-ai/claude-agent-sdk.' apps/local-service/src/main.ts
