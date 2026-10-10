@@ -1,43 +1,105 @@
+# Название отдельных проверок runtime-контрактов в GitHub Actions.
+# Пример: Runtime Bridge Contracts.
 name: Runtime Bridge Contracts
 
-# Новый provider-neutral слой пока не подключён к main.ts. Проверяем типы и
-# scripted protocol cases отдельно, не выполняя реальную модель/сервис.
+# Проверять интерфейсы адаптеров при любом изменении ветки или PR.
+# Пример: push в feat/11-native-runtime-adapter-core.
 on:
+  # После каждого нового коммита в рабочую ветку.
+  # Пример: commit в feat/* автоматически перепроверяет adapter tests.
   push:
+  # Проверять итоговый состав PR до слияния в integration branch.
+  # Пример: feat/11-native-runtime-adapter-core → feature/runtime-bridge-followup-294.
   pull_request:
+  # Разрешить ручной повторный запуск при необходимости.
+  # Пример: Actions → Run workflow.
   workflow_dispatch:
 
+# Workflow только читает repository и не нуждается в GitHub write token.
+# Пример: contents: read достаточно для checkout.
 permissions:
+  # Исключить push и другие привилегированные операции.
+  # Пример: read позволяет actions/checkout получать файлы.
   contents: read
 
+# Набор jobs изолированного runtime adapter contract.
+# Пример: один job с Node 24 и тестами local-service.
 jobs:
+  # Machine-readable идентификатор job.
+  # Пример: runtime-bridge-contracts используется в branch checks.
   runtime-bridge-contracts:
+    # Имя job, видимое в Checks.
+    # Пример: Typecheck and test native runtime bridge.
     name: Typecheck and test native runtime bridge
+    # Platform для Node/Nx с поддерживаемым Corepack.
+    # Пример: ubuntu-latest.
     runs-on: ubuntu-latest
+    # Верхняя граница времени, чтобы install/test не зависли бесконечно.
+    # Пример: 15 минут.
     timeout-minutes: 15
+    # Перенести Yarn cache в доступный runner каталог вместо /yarn-cache.
+    # Пример: /tmp/harness-ci-yarn-cache, не хостовой Docker volume.
+    env:
+      # Yarn environment override имеет приоритет перед repository cacheFolder.
+      # Пример: /tmp/harness-ci-yarn-cache.
+      YARN_CACHE_FOLDER: /tmp/harness-ci-yarn-cache
+    # Последовательные шаги полного adapter contract CI.
+    # Пример: checkout → Node → immutable install → typecheck → test.
     steps:
+      # Отображаемое название шага загрузки исходников.
+      # Пример: Checkout repository.
       - name: Checkout repository
+        # Официальный checkout action.
+        # Пример: actions/checkout@v4.
         uses: actions/checkout@v4
+        # Без сохранения GitHub токена в локальном .git/config.
+        # Пример: persist-credentials: false.
         with:
+          # Только чтение исходников, push не нужен.
+          # Пример: false.
           persist-credentials: false
 
+      # Название Node setup.
+      # Пример: Setup Node LTS.
       - name: Setup Node LTS
+        # Официальная настройка Node.
+        # Пример: actions/setup-node@v4.
         uses: actions/setup-node@v4
+        # Версия совпадает с package.json engines.
+        # Пример: 24.21.0.
         with:
+          # Не использовать системную версию раннера.
+          # Пример: 24.21.0.
           node-version: "24.21.0"
 
+      # Название шага immutable workspace install.
+      # Пример: Install immutable Yarn workspace.
       - name: Install immutable Yarn workspace
+        # Использовать committed yarn.lock, без package upgrade.
+        # Пример: corepack yarn install --immutable.
         run: |
           corepack enable
           corepack yarn install --immutable
 
+      # Название типовой проверки.
+      # Пример: Typecheck local-service.
       - name: Typecheck local-service
+        # Проверить strict TS в runtime sources и existing local-service.
+        # Пример: corepack yarn nx typecheck local-service --skip-nx-cache.
         run: corepack yarn nx typecheck local-service --skip-nx-cache
 
+      # Название набора scripted protocol regressions.
+      # Пример: Scripted runtime adapter tests.
       - name: Scripted runtime adapter tests
+        # Не запускать реальные модели: только injected JSON-RPC/SDK ports.
+        # Пример: corepack yarn nx test local-service --skip-nx-cache.
         run: corepack yarn nx test local-service --skip-nx-cache
 
+      # Название статического ограничения на подключение runtime.
+      # Пример: Validate source boundaries.
       - name: Validate source boundaries
+        # Проверить, что STEP-002 всё ещё не включает SDK/process launch в main.
+        # Пример: не допускается импорт node:child_process в main.ts.
         run: |
           test -f apps/local-service/src/runtime/bridge.ts
           ! grep -Eq 'from .node:child_process.|from .@anthropic-ai/claude-agent-sdk.' apps/local-service/src/main.ts
