@@ -96,10 +96,20 @@ Reference: https://code.claude.com/docs/en/agent-sdk/sessions
 3. Session identifiers существуют лишь внутри текущего adapter вызова/UI;
    не являются долговечным подтверждением execution, не записываются в
    REQ/ADR/STEP fingerprints.
-4. Права инструментов не разрешаются по умолчанию. Без permission broker
-   команда/редактирование получают deny. Никаких bypassPermissions.
+4. Права инструментов не разрешаются по умолчанию. Codex явно получает
+   `approvalPolicy=on-request` и `sandbox=workspace-write` на уровне thread;
+   Claude использует `permissionMode=default` и `settingSources=[]`, не
+   загружая обычные user/project allowlists. Managed policy остаётся вне
+   контроля адаптера. Без permission broker команда/редактирование получают
+   deny; UI broker должен увидеть конкретный command/path preview.
+   Если preview недоступен, запрос отклоняется вместо слепого подтверждения.
+   Никаких bypassPermissions.
 5. Raw SDK event/JSON-RPC args, stderr/traceback и auth tokens не выводятся
    как telemetry. В UI допускается только whitelisted text/tool/type.
+   Содержимое model text по природе остаётся недоверенным и должно безопасно
+   отображаться как text, не как HTML/скрипт. Данные конкретного action,
+   необходимые для осмысленного подтверждения, доступны лишь callback
+   интерактивного permission broker — не логируются в runtime events.
 6. Нет прямого процесса/FS I/O/transport в новых файлах runtime. Реальные
    dependencies и invocation появятся за approved supervisor boundary.
 7. Не считать этот этап end-to-end SDK integration или выполненным STEP-004/005.
