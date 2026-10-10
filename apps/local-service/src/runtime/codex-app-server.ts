@@ -158,6 +158,11 @@ export function createCodexAppServerAdapter(
       if (!turnId) throw new TypeError('Codex turn/start did not return turn.id');
       emit(run, 'run.started', threadId);
 
+      // Approval request зачастую содержит лишь itemId. Command text был
+      // опубликован раньше через item/started; держим его только в памяти
+      // текущего turn, никогда не пишем в telemetry или project artifacts.
+      const commandPreviews = new Map<string, string>();
+
       const interrupt = async () => {
         try {
           await rpc.request('turn/interrupt', { threadId, turnId });
@@ -196,12 +201,25 @@ export function createCodexAppServerAdapter(
               tool: kind,
               requestId: String(message.id),
             });
-            const response = await run.requestPermission({
-              runtimeId: 'codex',
-              kind,
-              name: kind,
-              requestId: String(message.id),
-            }).catch(() => 'deny' as const);
+            const itemId = text(data, 'itemId');
+            const preview = kind === 'command'
+              ? (
+                  text(data, 'command') ??
+                  (itemId ? commandPreviews.get(itemId) : undefined)
+                )?.slice(0, 4096)
+              : undefined;
+
+            // Unknown command body or file diff is not safe to approve:
+            // do not ask the user to blindly authorize an undisclosed action.
+            const response = preview
+              ? await run.requestPermission({
+                  runtimeId: 'codex',
+                  kind,
+                  name: kind,
+                  requestId: String(message.id),
+                  preview,
+                }).catch(() => 'deny' as const)
+              : 'deny' as const;
             if (!rpc.respond) throw new TypeError('Codex transport cannot answer approval requests');
             await rpc.respond(message.id, {
               decision: response === 'allow' ? 'accept' : 'decline',
@@ -217,6 +235,11 @@ export function createCodexAppServerAdapter(
           } else if (message.method === 'item/started') {
             const item = objectField(data, 'item');
             const kind = text(item, 'type');
+            const itemId = text(item, 'id');
+            const command = text(item, 'command');
+            if (kind === 'commandExecution' && itemId && command) {
+              commandPreviews.set(itemId, command.slice(0, 4096));
+            }
             if (kind && kind !== 'agentMessage' && kind !== 'reasoning') {
               emit(run, 'tool.started', threadId, { tool: kind });
             }
