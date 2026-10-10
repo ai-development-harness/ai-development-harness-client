@@ -127,11 +127,18 @@ export function createClaudeAgentSdkAdapter(
                 return { behavior: 'deny', message: 'Execution cancelled' };
               }
               emit(run, 'input.required', sessionId, { tool: toolName });
-              const approved = await run.requestPermission({
-                runtimeId: 'claude',
-                kind: 'tool',
-                name: toolName,
-              }).catch(() => 'deny' as const);
+              const rawPreview = input.command ?? input.file_path ?? input.path;
+              const preview = typeof rawPreview === 'string' && rawPreview.trim()
+                ? rawPreview.slice(0, 4096) : undefined;
+              // Uninspectable tool input cannot be approved blindly.
+              const approved = preview
+                ? await run.requestPermission({
+                    runtimeId: 'claude',
+                    kind: 'tool',
+                    name: toolName,
+                    preview,
+                  }).catch(() => 'deny' as const)
+                : 'deny' as const;
               return approved === 'allow'
                 ? { behavior: 'allow', updatedInput: input }
                 : { behavior: 'deny', message: 'Tool approval denied' };
