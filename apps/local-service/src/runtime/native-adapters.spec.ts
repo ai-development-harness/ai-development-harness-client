@@ -346,6 +346,9 @@ describe('Claude Agent SDK query adapter', () => {
   it('использует safe native fallback только до любой модели или tool', async () => {
     const sdk: ClaudeSdkPort = {
       query: async function* () {
+        // Non-execution SDK service metadata до native session lookup
+        // не считается фактическим запуском turn/tool.
+        yield { type: 'system', subtype: 'status' };
         throw { code: 'SESSION_NOT_FOUND' };
       },
     };
