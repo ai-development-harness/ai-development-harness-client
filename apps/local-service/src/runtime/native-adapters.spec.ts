@@ -204,6 +204,32 @@ describe('Codex App Server protocol', () => {
     expect(JSON.stringify(await adapter.getAccount())).not.toContain('SECRET');
   });
 
+  it('не делит один notification iterator между параллельными Codex turns', async () => {
+    let notify!: () => void;
+    let release!: () => void;
+    const started = new Promise<void>((resolve) => { notify = resolve; });
+    const pending = new Promise<void>((resolve) => { release = resolve; });
+    const fake = codexPort([]);
+    fake.port.events = async function* () {
+      notify();
+      await pending;
+      yield {
+        method: 'turn/completed',
+        params: {
+          threadId: 'thr-1', turnId: 'turn-1',
+          turn: { id: 'turn-1', status: 'completed' },
+        },
+      };
+    };
+    const adapter = createCodexAppServerAdapter({ rpc: fake.port });
+    const first = adapter.execute(createRun().run);
+    await started;
+    await expect(adapter.execute(createRun().run))
+      .rejects.toThrow(/active turn/);
+    release();
+    expect((await first).status).toBe('completed');
+  });
+
   it('не превращает failed turn в completed', async () => {
     const fake = codexPort([{
       method: 'turn/completed',
