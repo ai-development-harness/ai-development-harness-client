@@ -88,6 +88,13 @@ jobs:
         # Пример: corepack yarn nx typecheck local-service --skip-nx-cache.
         run: corepack yarn nx typecheck local-service --skip-nx-cache
 
+      # Имя правила style/security lint для новых adapter-модулей.
+      # Пример: Lint local-service.
+      - name: Lint local-service
+        # Правила проекта проверяют imports/security boundary и unsafe code.
+        # Пример: corepack yarn nx lint local-service --skip-nx-cache.
+        run: corepack yarn nx lint local-service --skip-nx-cache
+
       # Название набора scripted protocol regressions.
       # Пример: Scripted runtime adapter tests.
       - name: Scripted runtime adapter tests
