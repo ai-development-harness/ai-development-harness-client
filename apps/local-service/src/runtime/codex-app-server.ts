@@ -82,6 +82,7 @@ export function createCodexAppServerAdapter(
   // One initialized JSON-RPC connection may serve consecutive turns; never
   // claim success if initialization or the native account endpoint failed.
   let init: Promise<void> | undefined;
+  let activeTurn = false;
   const ready = () => {
     init ??= rpc.initialize().catch((error: unknown) => {
       init = undefined;
@@ -112,6 +113,11 @@ export function createCodexAppServerAdapter(
       return safeAccount(account);
     },
     async execute(run: NativeExecution): Promise<NativeResult> {
+      // Один JSON-RPC event iterator = один active turn. Без multiplex
+      // самостоятельные consumers могли украсть уведомления друг у друга.
+      if (activeTurn) throw new Error('Codex app-server connection already has an active turn');
+      activeTurn = true;
+      try {
       await ready();
       if (run.signal.aborted) return { status: 'interrupted' };
 
@@ -287,6 +293,9 @@ export function createCodexAppServerAdapter(
         sessionId: threadId,
         reasonCode: 'CODEX_STREAM_ENDED_UNPROVEN',
       };
+      } finally {
+        activeTurn = false;
+      }
     },
   };
 }
