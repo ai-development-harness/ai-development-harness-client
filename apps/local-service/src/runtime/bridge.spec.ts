@@ -246,6 +246,30 @@ describe('runtime bridge — canonical Harness ownership', () => {
     expect(app.events[0].runtimeId).toBe('codex');
   });
 
+  it('повторный UI submit того же executionId не запускает второй native turn', async () => {
+    let release!: () => void;
+    let nativeStarted!: () => void;
+    const wait = new Promise<void>((resolve) => { release = resolve; });
+    const started = new Promise<void>((resolve) => { nativeStarted = resolve; });
+    const app = setup(
+      async () => allowed(),
+      async () => {
+        nativeStarted();
+        await wait;
+        return { status: 'completed' };
+      },
+    );
+    const first = app.execute();
+    await started;
+    await expect(app.execute()).resolves.toEqual({
+      status: 'blocked',
+      reasonCode: 'EXECUTION_ALREADY_ACTIVE',
+    });
+    expect(app.codexExecute).toHaveBeenCalledTimes(1);
+    release();
+    await expect(first).resolves.toEqual({ status: 'completed' });
+  });
+
   it('abort до допуска к provider не создаёт нативную сессию', async () => {
     const app = setup(
       async () => allowed(),
