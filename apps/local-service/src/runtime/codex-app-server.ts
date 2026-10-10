@@ -102,6 +102,8 @@ export function createCodexAppServerAdapter(
   return {
     runtimeId: 'codex',
     async getCapabilities() {
+      // Не рекламировать доступные capability до успешного handshake.
+      await ready();
       return capabilities;
     },
     async getAccount(): Promise<AccountSummary> {
@@ -174,9 +176,14 @@ export function createCodexAppServerAdapter(
           }
           const data = object(message.params);
           const targetThread = text(data, 'threadId');
-          if (targetThread && targetThread !== threadId) continue;
           const targetTurn = text(data, 'turnId');
-          if (targetTurn && targetTurn !== turnId) continue;
+          // Одна native-сессия не вправе принять сообщения другой.
+          // Пропущенная identity не является доказательством matching turn.
+          if (targetThread !== threadId) continue;
+          if (
+            message.method !== 'turn/completed' &&
+            targetTurn !== turnId
+          ) continue;
 
           if (
             message.id !== undefined &&
