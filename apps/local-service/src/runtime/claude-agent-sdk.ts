@@ -27,6 +27,8 @@ export interface ClaudeSdkQueryRequest {
     resume?: string;
     abortController: AbortController;
     permissionMode: 'default';
+    /** Не импортировать пользовательские/project allow rules без preflight. */
+    settingSources: [];
     canUseTool: (
       toolName: string,
       input: Record<string, unknown>,
@@ -115,6 +117,9 @@ export function createClaudeAgentSdkAdapter(
             ...(run.nativeSessionId ? { resume: run.nativeSessionId } : {}),
             abortController: controller,
             permissionMode: 'default',
+            settingSources: [],
+            // Явно исключаем project/user allowlists. Managed policy
+            // всё ещё может определять разрешения вне этого adapter.
             // Permissions never silently become allow. The UI broker is
             // optional, and RuntimeBridge defaults to explicit deny.
             canUseTool: async (toolName, input) => {
