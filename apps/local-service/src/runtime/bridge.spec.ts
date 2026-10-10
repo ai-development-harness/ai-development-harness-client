@@ -87,6 +87,17 @@ function setup(
 }
 
 describe('runtime bridge — canonical Harness ownership', () => {
+  it('ошибка Harness authority не запускает provider и не течёт в UI', async () => {
+    const app = setup(
+      async () => { throw new Error('private recovery state details'); },
+      async () => ({ status: 'completed' }),
+    );
+    await expect(app.execute()).resolves.toEqual({
+      status: 'blocked', reasonCode: 'HARNESS_ADMISSION_UNAVAILABLE',
+    });
+    expect(app.codexExecute).not.toHaveBeenCalled();
+  });
+
   it('не запускает provider без разрешения Harness', async () => {
     const app = setup(
       async () => ({ status: 'blocked', reasonCode: 'INTENT_BASIS_STALE' }),
